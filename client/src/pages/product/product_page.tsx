@@ -177,7 +177,7 @@ export const F_Product_Page: React.FC = () => {
             const video_result = await F_Generate_Video_Preview(product);
 
             if (!video_result) {
-                alert('Video generation failed: no video URI returned.');
+                alert(F_Get_Text('product.video_generation_failed'));
                 return;
             }
 
@@ -306,8 +306,10 @@ export const F_Product_Page: React.FC = () => {
     const has_multiple_images = F_Get_Image_Order().length > 1;
 
     const display_title = product.product_title || F_Get_Text('product.title');
-    const display_desc = product.product_desc || product.raw_desc || 'No description provided.';
+    const display_desc = product.product_desc || product.raw_desc || F_Get_Text('product.no_description');
     const body_type_value = (product as any)['v\u00fccut_tipi'] ?? (product as any)['v\u00c3\u00bccut_tipi'];
+    const video_thumbnail_source = product.model_front || product.raw_front || product.model_back || product.raw_back || null;
+    const has_video_media = Boolean(video_url || product.model_video);
 
     return (
         <F_Main_Template p_is_authenticated={true}>
@@ -337,6 +339,10 @@ export const F_Product_Page: React.FC = () => {
                                         />
                                     ) : (
                                         <>
+                                            <div
+                                                className={`absolute inset-0 bg-cover bg-center blur-md scale-110 ${has_video_media ? 'opacity-45' : 'opacity-55 grayscale'} ${video_thumbnail_source ? '' : 'bg-gradient-to-br from-secondary/30 to-secondary/10'}` }
+                                                style={video_thumbnail_source ? { backgroundImage: `url(${video_thumbnail_source})` } : undefined}
+                                            />
                                             <div className="absolute inset-0 bg-black/30"></div>
                                             <button
                                                 className="relative z-10 flex flex-col items-center gap-4 group/btn transition-transform hover:scale-105 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
@@ -351,7 +357,7 @@ export const F_Product_Page: React.FC = () => {
                                                     )}
                                                 </div>
                                                 <div className="px-6 py-2 bg-black/40 backdrop-blur-md rounded-full border border-white/10 text-white font-bold text-sm tracking-wide shadow-lg uppercase">
-                                                    {is_generating_video ? 'Generating...' : F_Get_Text('product.create_video')}
+                                                    {is_generating_video ? F_Get_Text('product.generating_video') : F_Get_Text('product.create_video')}
                                                 </div>
                                             </button>
                                         </>
@@ -418,14 +424,6 @@ export const F_Product_Page: React.FC = () => {
                                     >
                                         <img src={product.model_front} alt="Model Front" className="w-full h-full object-cover" />
                                     </button>
-                                    <button
-                                        onClick={(e) => { e.stopPropagation(); void F_Handle_Image_Fix('model_front'); }}
-                                        disabled={is_retrying}
-                                        className="absolute top-1 right-1 p-1 rounded-md bg-black/60 text-white hover:bg-black/80 disabled:opacity-50"
-                                        title={F_Get_Text('common.retry')}
-                                    >
-                                        <RotateCcw size={14} />
-                                    </button>
                                 </div>
                             )}
 
@@ -440,14 +438,6 @@ export const F_Product_Page: React.FC = () => {
                                     >
                                         <img src={product.model_back} alt="Model Back" className="w-full h-full object-cover" />
                                     </button>
-                                    <button
-                                        onClick={(e) => { e.stopPropagation(); void F_Handle_Image_Fix('model_back'); }}
-                                        disabled={is_retrying}
-                                        className="absolute top-1 right-1 p-1 rounded-md bg-black/60 text-white hover:bg-black/80 disabled:opacity-50"
-                                        title={F_Get_Text('common.retry')}
-                                    >
-                                        <RotateCcw size={14} />
-                                    </button>
                                 </div>
                             )}
 
@@ -458,6 +448,11 @@ export const F_Product_Page: React.FC = () => {
                                     : 'border-transparent hover:border-secondary/30'
                                     }`}
                             >
+                                <div
+                                    className={`absolute inset-0 bg-cover bg-center blur-sm scale-110 ${has_video_media ? 'opacity-65' : 'opacity-55 grayscale'} ${video_thumbnail_source ? '' : 'bg-gradient-to-br from-secondary/40 to-secondary/20'}` }
+                                    style={video_thumbnail_source ? { backgroundImage: `url(${video_thumbnail_source})` } : undefined}
+                                />
+                                <div className={`absolute inset-0 ${has_video_media ? 'bg-black/10' : 'bg-black/20'}`} />
                                 <Video size={24} className="text-white relative z-10" />
                             </button>
                         </div>
@@ -473,12 +468,12 @@ export const F_Product_Page: React.FC = () => {
                                 <button
                                     onClick={() => F_Copy_To_Clipboard(display_title, 'title')}
                                     className="p-2 text-secondary hover:text-primary transition-colors flex-shrink-0"
-                                    title="Copy Title"
+                                    title={F_Get_Text('product.copy_title')}
                                 >
                                     {copied_field === 'title' ? <Check size={20} className="text-green-500" /> : <Copy size={20} />}
                                 </button>
                             </div>
-                            <p className="text-secondary text-sm mt-1">ID: {product.product_id}</p>
+                            <p className="text-secondary text-sm mt-1">{F_Get_Text('product.id_label')}: {product.product_id}</p>
                         </div>
 
                         <div>
@@ -489,17 +484,17 @@ export const F_Product_Page: React.FC = () => {
                                 <button
                                     onClick={() => F_Copy_To_Clipboard(display_desc, 'desc')}
                                     className="p-1.5 text-secondary hover:text-primary transition-colors text-sm flex items-center gap-1.5"
-                                    title="Copy Description"
+                                    title={F_Get_Text('product.copy_description')}
                                 >
                                     {copied_field === 'desc' ? (
                                         <>
                                             <Check size={16} className="text-green-500" />
-                                            <span className="text-green-500 font-medium">Copied!</span>
+                                            <span className="text-green-500 font-medium">{F_Get_Text('product.copied')}</span>
                                         </>
                                     ) : (
                                         <>
                                             <Copy size={16} />
-                                            <span>Copy</span>
+                                            <span>{F_Get_Text('product.copy')}</span>
                                         </>
                                     )}
                                 </button>

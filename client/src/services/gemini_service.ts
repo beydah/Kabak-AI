@@ -1,12 +1,14 @@
 import { GoogleGenerativeAI } from '@google/generative-ai';
 // @ts-ignore
 import { GoogleGenAI } from "@google/genai";
-import { ProductInput, Accessory, BgOption, ApiLog, I_Product_Data } from '../types/interfaces';
-import { ModelService, AIModel } from './model_service';
+import { ProductInput, Accessory, BgOption, I_Product_Data } from '../types/interfaces';
+import { ModelService } from './model_service';
 import { F_Build_Imagen_Prompt, F_Get_Negative_Prompt, F_Build_Structured_Prompt } from '../utils/prompt_utils';
-import { F_Optimize_Base64_For_Imagen } from '../utils/image_utils';
+import { F_Track_Usage } from '../utils/storage_utils';
 
-const LOGS_STORAGE_KEY = 'kabak_ai_logs';
+const DEBUG_AI_LOGS = ((import.meta as any).env?.VITE_DEBUG_AI_LOGS === 'true');
+const F_Debug_Log = (...args: any[]) => { if (DEBUG_AI_LOGS) console.log(...args); };
+const F_Debug_Warn = (...args: any[]) => { if (DEBUG_AI_LOGS) console.warn(...args); };
 
 // Singleton Instance Holder
 let instance: GeminiService | null = null;
@@ -30,7 +32,7 @@ export class GeminiService {
         this.ai = new GoogleGenerativeAI(this.apiKey);
         this.modelService = ModelService.getInstance();
 
-        console.log("[GeminiService] Initialized (Strict Gemini 2.0 Flash Mode)");
+        F_Debug_Log("[GeminiService] Initialized (Strict Gemini 2.0 Flash Mode)");
     }
 
     public static getInstance(): GeminiService {
@@ -50,7 +52,7 @@ export class GeminiService {
 
             while (attempt < maxAttempts) {
                 attempt++;
-                console.log(`[GeminiService] Generation Attempt ${attempt} (Feedback: ${currentFeedback ? 'YES' : 'NONE'})...`);
+                F_Debug_Log(`[GeminiService] Generation Attempt ${attempt} (Feedback: ${currentFeedback ? 'YES' : 'NONE'})...`);
 
                 const productBase64 = input.frontImage?.replace(/^data:image\/(png|jpeg|webp);base64,/, "");
                 if (!productBase64) throw new Error("Input Image Missing");
@@ -136,18 +138,18 @@ export class GeminiService {
                 lastImage = generatedBase64;
 
                 // QC Check
-                console.log("[GeminiService] Running Quality Control...");
+                F_Debug_Log("[GeminiService] Running Quality Control...");
                 const qc = await this.checkImageQuality(generatedBase64);
 
                 if (qc.pass) {
-                    console.log("[GeminiService] QC PASSED.");
+                    F_Debug_Log("[GeminiService] QC PASSED.");
                     return generatedBase64;
                 } else {
-                    console.warn(`[GeminiService] QC FAILED: ${qc.reason}`);
+                    F_Debug_Warn(`[GeminiService] QC FAILED: ${qc.reason}`);
                     currentFeedback = qc.reason || "Unknown quality issue";
 
                     if (attempt >= maxAttempts) {
-                        console.warn("[GeminiService] Max retries reached. Returning last generated image.");
+                        F_Debug_Warn("[GeminiService] Max retries reached. Returning last generated image.");
                         return lastImage; // Return anyway
                     }
                     // Loop continues to Retry
@@ -259,7 +261,7 @@ export class GeminiService {
     async generateBackView(input: ProductInput, frontViewImage: string, seoContext?: string): Promise<string> {
         // Updated to use the same high-fidelity model as Front View
         const modelName = 'models/gemini-3-pro-image-preview';
-        console.log(`[GeminiService] Generating Back View with ${modelName}...`);
+        F_Debug_Log(`[GeminiService] Generating Back View with ${modelName}...`);
 
         return this.modelService.executeWithFailover('image', async () => {
             let attempt = 0;
@@ -269,7 +271,7 @@ export class GeminiService {
 
             while (attempt < maxAttempts) {
                 attempt++;
-                console.log(`[GeminiService] Back View Attempt ${attempt}...`);
+                F_Debug_Log(`[GeminiService] Back View Attempt ${attempt}...`);
 
                 // Validate Inputs
                 const frontBase64 = frontViewImage.replace(/^data:image\/(png|jpeg|webp);base64,/, "");
@@ -332,14 +334,14 @@ export class GeminiService {
                 lastImage = generatedBase64;
 
                 // QC Check
-                console.log("[GeminiService] Running Quality Control (Back View)...");
+                F_Debug_Log("[GeminiService] Running Quality Control (Back View)...");
                 const qc = await this.checkImageQuality(generatedBase64);
 
                 if (qc.pass) {
-                    console.log("[GeminiService] QC PASSED.");
+                    F_Debug_Log("[GeminiService] QC PASSED.");
                     return generatedBase64;
                 } else {
-                    console.warn(`[GeminiService] QC FAILED: ${qc.reason}`);
+                    F_Debug_Warn(`[GeminiService] QC FAILED: ${qc.reason}`);
                     currentFeedback = qc.reason || "Unknown quality issue";
                     if (attempt >= maxAttempts) return lastImage;
                 }
@@ -350,7 +352,7 @@ export class GeminiService {
 
     // --- VIDEO (Veo 3.1 Preview) ---
     async generateVideo(input: ProductInput, imageBase64: string): Promise<I_Generated_Video_Result> {
-        console.log("[GeminiService] Generating Video with Veo 3.1 (New SDK)...");
+        F_Debug_Log("[GeminiService] Generating Video with Veo 3.1 (New SDK)...");
 
         // @ts-ignore
         const ai = new GoogleGenAI({ apiKey: this.apiKey });
@@ -360,7 +362,7 @@ export class GeminiService {
             throw new Error("Input image is invalid or too short.");
         }
 
-        console.log("[GeminiService] Video Generation Image Data Length:", cleanBase64.length);
+        F_Debug_Log("[GeminiService] Video Generation Image Data Length:", cleanBase64.length);
 
         const textPrompt = 'High-end fashion commercial featuring the model from the image. FRONT VIEW ONLY. The model should slowly move or pose while facing forward. Fabric texture showcase. Cinematic lighting. DO NOT SHOW THE BACK SIDE. Focus on the front design.';
 
@@ -381,12 +383,12 @@ export class GeminiService {
                 },
             });
 
-            console.log('Waiting for video generation to complete...');
+            F_Debug_Log('Waiting for video generation to complete...');
             while (operation.done !== true) {
                 await new Promise((resolve) => setTimeout(resolve, 10000));
                 // @ts-ignore
                 operation = await ai.operations.getVideosOperation({ operation });
-                console.log('Polling... Full Operation:', JSON.stringify(operation, null, 2));
+                F_Debug_Log('Polling... Full Operation:', JSON.stringify(operation, null, 2));
             }
 
             // @ts-ignore
@@ -402,13 +404,13 @@ export class GeminiService {
                 throw new Error('Video generation completed but no URI was returned.');
             }
 
-            console.log('[GeminiService] Fetching video blob from URI:', uri);
+            F_Debug_Log('[GeminiService] Fetching video blob from URI:', uri);
             const fetchUrl = uri.includes('key=')
                 ? uri
                 : `${uri}${uri.includes('?') ? '&' : '?'}key=${this.apiKey}`;
 
             const res = await fetch(fetchUrl, { method: 'GET' });
-            console.log('[GeminiService] Video Fetch Status:', res.status, res.statusText);
+            F_Debug_Log('[GeminiService] Video Fetch Status:', res.status, res.statusText);
 
             if (!res.ok) {
                 const errorText = await res.text();
@@ -427,10 +429,11 @@ export class GeminiService {
 
             const contentType = res.headers.get('content-type');
             if (contentType && !contentType.startsWith('video/') && !contentType.startsWith('application/octet-stream')) {
-                console.warn(`Unexpected Content-Type: ${contentType}. Continuing anyway.`);
+                F_Debug_Warn(`Unexpected Content-Type: ${contentType}. Continuing anyway.`);
             }
 
             const blob = await res.blob();
+            F_Track_Usage('veo-3.1-generate-preview', 0.05).catch(() => undefined);
             return {
                 playback_url: URL.createObjectURL(blob),
                 source_uri: uri,
@@ -448,7 +451,7 @@ export class GeminiService {
         return this.modelService.executeWithFailover('image', async (model) => {
             // Flash is perfect for analysis
             const modelName = 'gemini-2.0-flash';
-            console.log(`[GeminiService] ANALYZING with ${modelName}...`);
+            F_Debug_Log(`[GeminiService] ANALYZING with ${modelName}...`);
             const genModel = this.ai.getGenerativeModel({ model: modelName });
             const cleanBase64 = imageBase64.replace(/^data:image\/(png|jpeg|webp);base64,/, "");
 
@@ -466,7 +469,7 @@ export class GeminiService {
         const modelName = 'imagen-4.0-fast-generate-001';
         const url = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:predict?key=${this.apiKey}`;
 
-        console.log(`[GeminiService] Calling Imagen 4 (${modelName}) via REST...`);
+        F_Debug_Log(`[GeminiService] Calling Imagen 4 (${modelName}) via REST...`);
 
         const payload = {
             instances: [{ prompt: prompt }],

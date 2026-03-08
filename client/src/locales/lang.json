@@ -1,446 +1,782 @@
 {
-    "tr": {
-        "app_name": "Kabak AI",
-        "nav": {
-            "home": "Ana Sayfa",
-            "about": "Hakkımızda",
-            "ai_models": "AI Modelleri",
-            "open_source": "Açık Kaynak",
-            "contact": "İletişim",
-            "contact_email": "info.beydahsaglam@gmail.com",
-            "login": "Giriş",
-            "collection": "Koleksiyon",
-            "new_product": "Yeni Ürün",
-            "logout": "Çıkış"
-        },
-        "hero": {
-            "title": "AI ile Ürün Fotoğrafçılığında Devrim",
-            "subtitle": "Giyim ürünlerinizi profesyonel stüdyo kalitesinde görsellere dönüştürün. Manken seçimi, arka plan değişimi ve tanıtım videoları - hepsi yapay zeka gücüyle, saniyeler içinde.",
-            "cta_primary": "Ücretsiz Deneyin",
-            "cta_secondary": "Nasıl Çalışır?"
-        },
-        "features": {
-            "title": "AI Destekli Özellikler",
-            "subtitle": "E-ticaret işinizi büyüten, akıllı ve ölçeklenebilir araçlar",
-            "items": {
-                "mannequin": {
-                    "title": "Akıllı Manken Sistemi",
-                    "description": "Cinsiyet, yaş, vücut tipi ve ürün kesimi bazında optimize edilmiş mankenlerle ürünlerinizi sergileyin"
-                },
-                "background": {
-                    "title": "Dinamik Arka Plan Motoru",
-                    "description": "Stüdyo, kafe, şehir manzarası veya özel ortamlar - tek tıkla arka planınızı değiştirin"
-                },
-                "video": {
-                    "title": "Otomatik Video Üretimi",
-                    "description": "Ürünleriniz için profesyonel kalitede tanıtım videoları otomatik olarak oluşturun"
-                },
-                "accessories": {
-                    "title": "Akıllı Aksesuar Ekleme",
-                    "description": "Gözlük, çanta, takı ve daha fazlasını AI ile doğal bir şekilde görsellerinize entegre edin"
-                }
-            }
-        },
-        "about": {
-            "title": "Hakkımızda",
-            "subtitle": "E-ticaret için görsel üretimi yeniden tanımlıyoruz",
-            "description": "Kabak AI, moda ve giyim sektöründeki markaların stüdyo maliyetlerini %80'e kadar düşürmesini, üretim süresini 10 kat hızlandırmasını ve profesyonel kaliteyi demokratikleştirmesini sağlayan yapay zeka platformudur. Google Gemini altyapısı ile güçlendirilmiş sistemimiz, ham ürün fotoğraflarınızı satış odaklı görsellere dönüştürür.",
-            "stats": {
-                "cost_reduction": "%80 Maliyet Tasarrufu",
-                "time_saved": "10x Hızlı Üretim",
-                "quality": "Stüdyo Kalitesi"
-            }
-        },
-        "ai_models": {
-            "title": "AI Altyapısı & Fiyatlandırma",
-            "subtitle": "Modern Gemini modelleriyle güçlendirilmiş, şeffaf ve ölçeklenebilir altyapı",
-            "table": {
-                "use_case": "Kullanım Alanı",
-                "primary": "Birincil Model",
-                "fallback": "Yedek Model",
-                "cost": "Ort. Maliyet*",
-                "description": "Açıklama"
-            },
-            "items": {
-                "text": {
-                    "use_case": "Metin & SEO",
-                    "primary": "Gemini 3 Flash",
-                    "fallback": "Gemini 2.0 Flash",
-                    "cost": "~$0.01 / ürün",
-                    "description": "Ürün açıklamaları, meta tagler ve SEO optimizasyonu"
-                },
-                "image_analysis": {
-                    "use_case": "Görsel Analizi",
-                    "primary": "Gemini 3 Flash",
-                    "fallback": "Gemini 2.0 Pro",
-                    "cost": "~$0.03 / ürün",
-                    "description": "Ürün tanıma, renk/desen analizi ve kategorilendirme"
-                },
-                "image_gen": {
-                    "use_case": "Görsel Üretimi",
-                    "primary": "Gemini 3 Pro",
-                    "fallback": "Imagen 3",
-                    "cost": "~$0.15 / görsel",
-                    "description": "Yüksek çözünürlüklü manken ve arka plan üretimi"
-                },
-                "video": {
-                    "use_case": "Video Üretimi",
-                    "primary": "Veo 3",
-                    "fallback": "Veo 2",
-                    "cost": "~$0.80 / video",
-                    "description": "Sinematik ürün tanıtım videoları"
-                }
-            },
-            "pricing_note": "*Maliyetler tek bir üretim içindir ve Google Cloud API fiyatlandırmasına göre tahmin edilmiştir."
-        },
-        "open_source": {
-            "title": "Açık Kaynak & Topluluk",
-            "subtitle": "Şeffaflık ve işbirliği ile büyüyen bir platform",
-            "description": "Kabak AI, tamamen açık kaynak kodludur. Kod tabanımızı inceleyebilir, katkıda bulunabilir veya kendi sürümünüzü oluşturabilirsiniz. AI sistemlerinin şeffaf olması gerektiğine inanıyoruz.",
-            "github_button": "GitHub'da Görüntüle",
-            "license": "MIT Lisansı altında yayınlanmıştır",
-            "cta": "Kurulum veya entegrasyon konusunda yardıma mı ihtiyacınız var?",
-            "cta_button": "Destek Alın"
-        },
-        "contact": {
-            "title": "İletişim",
-            "subtitle": "Sorularınız mı var? Bize ulaşın",
-            "contact_email": "info.beydahsaglam@gmail.com",
-            "email_label": "E-posta",
-            "phone_label": "Telefon",
-            "social_label": "Sosyal Medya & Bağlantılar",
-            "cta": "Projeniz için özel bir çözüme mi ihtiyacınız var?",
-            "cta_button": "İletişime Geçin",
-            "links": {
-                "github_personal": "GitHub (Kişisel)",
-                "github_brand": "GitHub (Kabak AI)",
-                "linkedin": "LinkedIn",
-                "youtube": "YouTube",
-                "website": "Web Sitesi"
-            }
-        },
-        "footer": {
-            "copyright": "© 2026 Kabak AI. Tüm hakları saklıdır.",
-            "made_with": "Türkiye'de ❤️ ile yapıldı",
-            "creator": "Beydah Sağlam tarafından geliştirilmiştir"
-        },
-        "login": {
-            "title": "Giriş Yap",
-            "username_placeholder": "Kullanıcı adı",
-            "password_placeholder": "Şifre",
-            "submit_button": "Giriş",
-            "invalid_credentials": "Kullanıcı adı veya şifre hatalı.",
-            "account_locked": "Hesabınız geçici olarak kilitlendi.",
-            "try_again_after": "Tekrar denemek için kalan süre:",
-            "contact_prompt": "Eğer kullanıcı olmak istiyorsanız lütfen",
-            "contact_link": "iletişime geçin"
-        },
-        "collection": {
-            "title": "Koleksiyon",
-            "empty_state": "Henüz koleksiyon yok",
-            "create_new": "Yeni Ürün"
-        },
-        "new_product": {
-            "title": "Yeni Ürün Girişi",
-            "back_to_collection": "← Koleksiyona Dön",
-            "upload": {
-                "front": "Ön Fotoğraf",
-                "back": "Arka Fotoğraf",
-                "select_file": "Dosya Seçin",
-                "click_to_upload": "Yüklemek için Tıklayın veya Sürükleyin",
-                "change_photo": "Fotoğrafı Değiştir",
-                "file_format": "JPG, PNG, WEBP, SVG",
-                "error_type": "Geçersiz dosya tipi."
-            },
-            "validation": {
-                "required_all": "Lütfen tüm alanları doldurun.",
-                "required_images": "Lütfen hem ön hem arka fotoğrafı yükleyin."
-            },
-            "labels": {
-                "gender": "Cinsiyet",
-                "body_type": "Manken Vücut Tipi",
-                "fit": "Ürün Kesimi",
-                "background": "Arka Plan",
-                "accessory": "Aksesuar",
-                "age": "Manken Yaşı",
-                "description": "Ürün Açıklaması"
-            },
-            "options": {
-                "gender": {
-                    "female": "Kadın",
-                    "male": "Erkek"
-                },
-                "body_type": {
-                    "slim": "Zayıf",
-                    "average": "Ortalama",
-                    "plus_size": "Büyük Beden"
-                },
-                "fit": {
-                    "slim": "Dar Kesim",
-                    "regular": "Normal Kesim",
-                    "oversized": "Bol Kesim"
-                },
-                "background": {
-                    "black": "Siyah",
-                    "white": "Beyaz",
-                    "orange": "Turuncu",
-                    "cafe": "Kafe Ortamı",
-                    "urban": "Şehir Ortamı"
-                },
-                "accessory": {
-                    "none": "Yok",
-                    "bag": "Çanta",
-                    "glasses": "Gözlük",
-                    "wallet": "Cüzdan",
-                    "car_key": "Maserati Anahtarı"
-                }
-            },
-            "placeholders": {
-                "description": "Ürün detaylarını buraya girebilirsiniz..."
-            },
-            "generate_button": "Ürün Oluştur"
-        },
-        "pricing": {
-            "title": "Dinamik Fiyatlandırma",
-            "estimated_cost": "Tahmini Maliyet",
-            "simulation_note": "Maliyetler ortalama kullanım bazında hesaplanmıştır.",
-            "reset": "Simülasyonu Sıfırla",
-            "product_bundle": "Ürün Paketi",
-            "bundles_subtext": "Ürün Paketleri",
-            "add_product": "Ürün Ekle",
-            "remove_product": "Ürün Çıkar",
-            "bundle_desc": "1 Metin + 4 Görsel + 1 Video"
-        },
-        "home": {
-            "cta": {
-                "request_installation": "Kurulum Talep Edin"
-            }
-        },
-        "analytics": {
-            "title": "Kullanım Analizi",
-            "view_daily": "Günlük",
-            "view_weekly": "Haftalık",
-            "view_monthly": "Aylık",
-            "total_requests": "Toplam İstek",
-            "estimated_cost": "Tahmini Maliyet",
-            "requests_per_day": "Günlük İstek Limiti (RPD)",
-            "usage": "Kullanım",
-            "limit_reached": "Günlük limit aşıldı!",
-            "empty_state": "Henüz kullanım verisi yok. Analizleri görmek için ürün oluşturun!",
-            "delete_model": "Model Verilerini Sıfırla",
-            "reset_all": "Tüm Verileri Sıfırla",
-            "confirm_reset_title": "Analiz Verilerini Sıfırla",
-            "confirm_reset_message": "Tüm kullanım verilerini ve maliyet hesaplamalarını silmek istediğinizden emin misiniz? Bu işlem geri alınamaz."
-        },
-        "product": {
-            "title": "Ürün Detayı",
-            "download": "İndir",
-            "edit": "Düzenle",
-            "delete": "Sil",
-            "retry": "Yeniden Dene",
-            "save_changes": "Değişiklikleri Kaydet",
-            "cancel": "İptal",
-            "confirm_delete_title": "Ürünü Sil",
-            "confirm_delete_message": "Bu ürünü silmek istediğinizden emin misiniz? Bu işlem geri alınamaz.",
-            "delete_confirm_button": "Evet, Sil",
-            "edit_modal_title": "Ürünü Düzenle",
-            "update_success": "Ürün başarıyla güncellendi.",
-            "delete_success": "Ürün başarıyla silindi.",
-            "next_image": "Sonraki Görsel",
-            "prev_image": "Önceki Görsel",
-            "confirm_cancel": "İşlemi iptal etmek istediğinize emin misiniz?",
-            "cancel_job": "İşlemi İptal Et",
-            "retry_gen": "Yeniden Dene",
-            "delete_product": "Ürünü Sil",
-            "download_video": "Video İndir (MP4)",
-            "status": {
-                "writing_copy": "Metin Yazılıyor...",
-                "gen_front": "Ön Taraf Üretiliyor...",
-                "gen_back": "Arka Taraf Üretiliyor...",
-                "filming": "Video Çekiliyor...",
-                "processing": "İşleniyor...",
-                "analyzing": "Analiz ediliyor...",
-                "writing_opt": "Optimizasyon Yazılıyor..."
-            },
-            "create_video": "Video Oluştur"
-        },
-        "notifications": {
-            "title": "Bildirimler",
-            "empty": "Yeni bildirim yok",
-            "clear_all": "Tümünü Temizle",
-            "copy_all": "Hata Kayıtlarını Kopyala",
-            "copied": "Kopyalandı!",
-            "processing_failed": "İşlem Başarısız"
-        },
-        "settings": {
-            "title": "Ayarlar",
-            "language": "Dil / Language",
-            "theme": "Tema Değiştir"
-        },
-        "common": {
-            "loading": "Yükleniyor...",
-            "error": "Bir hata oluştu.",
-            "success": "İşlem başarılı.",
-            "search_placeholder": "Ürünlerde ara...",
-            "confirm": "Onayla",
-            "yes": "Evet",
-            "no": "Hayır",
-            "just_now": "Az önce",
-            "no_desc": "Açıklama yok"
-        },
-        "filters": {
-            "toggle": "Filtrele",
-            "clear": "Temizle",
-            "gender": {
-                "label": "Cinsiyet",
-                "all": "Tümü"
-            },
-            "age_range": {
-                "label": "Yaş Aralığı",
-                "all": "Tümü"
-            },
-            "status": {
-                "label": "Durum",
-                "all": "Tümü",
-                "finished": "Tamamlandı",
-                "running": "İşleniyor",
-                "exited": "Hata"
-            },
-            "sort": {
-                "label": "Sıralama",
-                "newest": "En Yeni",
-                "oldest": "En Eski"
-            }
-        },
-        "storage": {
-            "title": "Depolama Yönetimi",
-            "usage": "Depolama Kullanımı",
-            "used": "Kullanıldı",
-            "idb": "IndexedDB",
-            "local": "Yerel Hafıza",
-            "items": "Veritabanı Öğeleri",
-            "products": "Ürünler",
-            "products_desc": "Görseller & Veriler",
-            "drafts": "Taslaklar",
-            "drafts_desc": "Kaydedilmemiş Çalışmalar",
-            "settings": "Yerel Ayarlar",
-            "app_settings": "Uygulama Ayarları",
-            "app_settings_desc": "Tema, Dil, Varsayılanlar",
-            "item_count": "{count} Öğe",
-            "clear_modal": {
-                "title": "Depolamayı Temizle?",
-                "message": "{target} verisini silmek istediğinizden emin misiniz? Bu işlem geri alınamaz."
-            },
-            "actions": {
-                "clear": "Temizle",
-                "reset": "Uygulamayı Sıfırla"
-            }
-        }
+  "tr": {
+    "app_name": "Kabak AI",
+    "nav": {
+      "home": "Ana Sayfa",
+      "about": "Hakkımızda",
+      "ai_models": "AI Modelleri",
+      "open_source": "Açık Kaynak",
+      "contact": "İletişim",
+      "contact_email": "info.beydahsaglam@gmail.com",
+      "login": "Giriş",
+      "collection": "Koleksiyon",
+      "new_product": "Yeni Ürün",
+      "logout": "Çıkış"
     },
-    "en": {
-        "product": {
-            "title": "Product Detail",
-            "download": "Download",
-            "edit": "Edit",
-            "delete": "Delete",
-            "retry": "Retry",
-            "save_changes": "Save Changes",
-            "cancel": "Cancel",
-            "confirm_delete_title": "Delete Product",
-            "confirm_delete_message": "Are you sure you want to delete this product? This action cannot be undone.",
-            "delete_confirm_button": "Yes, Delete",
-            "edit_modal_title": "Edit Product",
-            "update_success": "Product updated successfully.",
-            "delete_success": "Product deleted successfully.",
-            "next_image": "Next Image",
-            "prev_image": "Previous Image",
-            "confirm_cancel": "Are you sure you want to cancel the job?",
-            "cancel_job": "Cancel Job",
-            "retry_gen": "Retry Generation",
-            "delete_product": "Delete Product",
-            "download_video": "Download Video",
-            "status": {
-                "writing_copy": "Writing Copy...",
-                "gen_front": "Generating Front...",
-                "gen_back": "Synthesizing Back...",
-                "filming": "Filming Video...",
-                "processing": "Processing...",
-                "analyzing": "Analyzing trends...",
-                "writing_opt": "Writing Optimization..."
-            },
-            "create_video": "Create Video"
+    "hero": {
+      "title": "AI ile Ürün Fotoğrafçılığında Devrim",
+      "subtitle": "Giyim ürünlerinizi profesyonel stüdyo kalitesinde görsellere dönüştürün. Manken seçimi, arka plan değişimi ve tanıtım videoları - hepsi yapay zeka gücüyle, saniyeler içinde.",
+      "cta_primary": "Ücretsiz Deneyin",
+      "cta_secondary": "Nasıl Çalışır?",
+      "badge": "AI Destekli Moda Teknolojisi"
+    },
+    "features": {
+      "title": "AI Destekli Özellikler",
+      "subtitle": "E-ticaret işinizi büyüten, akıllı ve ölçeklenebilir araçlar",
+      "items": {
+        "mannequin": {
+          "title": "Akıllı Manken Sistemi",
+          "description": "Cinsiyet, yaş, vücut tipi ve ürün kesimi bazında optimize edilmiş mankenlerle ürünlerinizi sergileyin"
         },
-        "notifications": {
-            "title": "Notifications",
-            "empty": "No new notifications",
-            "clear_all": "Clear All",
-            "copy_all": "Copy Error Logs",
-            "copied": "Copied!",
-            "processing_failed": "Processing Failed"
+        "background": {
+          "title": "Dinamik Arka Plan Motoru",
+          "description": "Stüdyo, kafe, şehir manzarası veya özel ortamlar - tek tıkla arka planınızı değiştirin"
         },
-        "settings": {
-            "title": "Settings",
-            "language": "Language / Dil",
-            "theme": "Toggle Theme"
+        "video": {
+          "title": "Otomatik Video Üretimi",
+          "description": "Ürünleriniz için profesyonel kalitede tanıtım videoları otomatik olarak oluşturun"
         },
-        "common": {
-            "loading": "Loading...",
-            "error": "An error occurred.",
-            "success": "Success.",
-            "search_placeholder": "Search products...",
-            "confirm": "Confirm",
-            "yes": "Yes",
-            "no": "No",
-            "just_now": "Just now",
-            "no_desc": "No description"
-        },
-        "filters": {
-            "toggle": "Filters",
-            "clear": "Clear",
-            "gender": {
-                "label": "Gender",
-                "all": "All"
-            },
-            "age_range": {
-                "label": "Age Range",
-                "all": "All"
-            },
-            "status": {
-                "label": "Status",
-                "all": "All",
-                "finished": "Finished",
-                "running": "Running",
-                "exited": "Failed"
-            },
-            "sort": {
-                "label": "Sort By",
-                "newest": "Newest",
-                "oldest": "Oldest"
-            }
-        },
-        "storage": {
-            "title": "Storage Management",
-            "usage": "Storage Usage",
-            "used": "Used",
-            "idb": "IndexedDB",
-            "local": "LocalStorage",
-            "items": "Database Items",
-            "products": "Products",
-            "products_desc": "Images & Metadata",
-            "drafts": "Drafts",
-            "drafts_desc": "Unsaved Work",
-            "settings": "Local Settings",
-            "app_settings": "App Settings",
-            "app_settings_desc": "Theme, Lang, Defaults",
-            "item_count": "{count} Item(s)",
-            "clear_modal": {
-                "title": "Clear Storage?",
-                "message": "Are you sure you want to clear {target}? This action cannot be undone."
-            },
-            "actions": {
-                "clear": "Clear",
-                "reset": "Reset Application"
-            }
+        "accessories": {
+          "title": "Akıllı Aksesuar Ekleme",
+          "description": "Gözlük, çanta, takı ve daha fazlasını AI ile doğal bir şekilde görsellerinize entegre edin"
         }
+      }
+    },
+    "about": {
+      "title": "Hakkımızda",
+      "subtitle": "E-ticaret için görsel üretimi yeniden tanımlıyoruz",
+      "description": "Kabak AI, moda ve giyim sektöründeki markaların stüdyo maliyetlerini %80'e kadar düşürmesini, üretim süresini 10 kat hızlandırmasını ve profesyonel kaliteyi demokratikleştirmesini sağlayan yapay zeka platformudur. Google Gemini altyapısı ile güçlendirilmiş sistemimiz, ham ürün fotoğraflarınızı satış odaklı görsellere dönüştürür.",
+      "stats": {
+        "cost_reduction": "%80 Maliyet Tasarrufu",
+        "time_saved": "10x Hızlı Üretim",
+        "quality": "Stüdyo Kalitesi"
+      },
+      "before_label": "Oncesi",
+      "after_label": "Sonrasi",
+      "slider_hint": "Karsilastirmak icin cubugu surukleyin."
+    },
+    "ai_models": {
+      "title": "AI Altyapısı & Fiyatlandırma",
+      "subtitle": "Modern Gemini modelleriyle güçlendirilmiş, şeffaf ve ölçeklenebilir altyapı",
+      "table": {
+        "use_case": "Kullanım Alanı",
+        "primary": "Birincil Model",
+        "fallback": "Yedek Model",
+        "cost": "Ort. Maliyet*",
+        "description": "Açıklama"
+      },
+      "items": {
+        "text": {
+          "use_case": "Metin & SEO",
+          "primary": "Gemini 3 Flash",
+          "fallback": "Gemini 2.0 Flash",
+          "cost": "~$0.01 / ürün",
+          "description": "Ürün açıklamaları, meta tagler ve SEO optimizasyonu"
+        },
+        "image_analysis": {
+          "use_case": "Görsel Analizi",
+          "primary": "Gemini 3 Flash",
+          "fallback": "Gemini 2.0 Pro",
+          "cost": "~$0.03 / ürün",
+          "description": "Ürün tanıma, renk/desen analizi ve kategorilendirme"
+        },
+        "image_gen": {
+          "use_case": "Görsel Üretimi",
+          "primary": "Gemini 3 Pro",
+          "fallback": "Imagen 3",
+          "cost": "~$0.15 / görsel",
+          "description": "Yüksek çözünürlüklü manken ve arka plan üretimi"
+        },
+        "video": {
+          "use_case": "Video Üretimi",
+          "primary": "Veo 3",
+          "fallback": "Veo 2",
+          "cost": "~$0.80 / video",
+          "description": "Sinematik ürün tanıtım videoları"
+        }
+      },
+      "pricing_note": "*Maliyetler tek bir üretim içindir ve Google Cloud API fiyatlandırmasına göre tahmin edilmiştir.",
+      "categories": {
+        "text": "Metin Modelleri",
+        "image": "Gorsel Modelleri",
+        "video": "Video Modelleri",
+        "other": "Diger Modeller"
+      },
+      "status": {
+        "primary": "Birincil",
+        "fallback": "Yedek"
+      },
+      "rpd": "RPD",
+      "usage_info": "Gunluk kota bazli canli kullanim",
+      "model_details": {
+        "gemini_20_flash": "Hizli analiz ve fallback metin uretimi.",
+        "gemini_25_flash": "Ana metin/SEO uretim modeli.",
+        "gemini_3_pro_image": "Model front/back gorsel uretimi.",
+        "veo_31": "Ana video uretim modeli (preview).",
+        "veo_30": "Video fallback modeli.",
+        "unknown": "Tanimlanmamis model."
+      }
+    },
+    "open_source": {
+      "title": "Açık Kaynak & Topluluk",
+      "subtitle": "Şeffaflık ve işbirliği ile büyüyen bir platform",
+      "description": "Kabak AI, tamamen açık kaynak kodludur. Kod tabanımızı inceleyebilir, katkıda bulunabilir veya kendi sürümünüzü oluşturabilirsiniz. AI sistemlerinin şeffaf olması gerektiğine inanıyoruz.",
+      "github_button": "GitHub'da Görüntüle",
+      "license": "MIT Lisansı altında yayınlanmıştır",
+      "cta": "Kurulum veya entegrasyon konusunda yardıma mı ihtiyacınız var?",
+      "cta_button": "Destek Alın"
+    },
+    "contact": {
+      "title": "İletişim",
+      "subtitle": "Sorularınız mı var? Bize ulaşın",
+      "contact_email": "info.beydahsaglam@gmail.com",
+      "email_label": "E-posta",
+      "phone_label": "Telefon",
+      "social_label": "Sosyal Medya & Bağlantılar",
+      "cta": "Projeniz için özel bir çözüme mi ihtiyacınız var?",
+      "cta_button": "İletişime Geçin",
+      "links": {
+        "github_personal": "GitHub (Kişisel)",
+        "github_brand": "GitHub (Kabak AI)",
+        "linkedin": "LinkedIn",
+        "youtube": "YouTube",
+        "website": "Web Sitesi"
+      }
+    },
+    "footer": {
+      "copyright": "© 2026 Kabak AI. Tüm hakları saklıdır.",
+      "made_with": "Türkiye'de ❤️ ile yapıldı",
+      "creator": "Beydah Sağlam tarafından geliştirilmiştir",
+      "creator_prefix": "Gelistiren",
+      "creator_name": "Beydah Saglam"
+    },
+    "login": {
+      "title": "Giriş Yap",
+      "username_placeholder": "Kullanıcı adı",
+      "password_placeholder": "Şifre",
+      "submit_button": "Giriş",
+      "invalid_credentials": "Kullanıcı adı veya şifre hatalı.",
+      "account_locked": "Hesabınız geçici olarak kilitlendi.",
+      "try_again_after": "Tekrar denemek için kalan süre:",
+      "contact_prompt": "Eğer kullanıcı olmak istiyorsanız lütfen",
+      "contact_link": "iletişime geçin"
+    },
+    "collection": {
+      "title": "Koleksiyon",
+      "empty_state": "Henüz koleksiyon yok",
+      "create_new": "Yeni Ürün"
+    },
+    "new_product": {
+      "title": "Yeni Ürün Girişi",
+      "back_to_collection": "← Koleksiyona Dön",
+      "upload": {
+        "front": "Ön Fotoğraf",
+        "back": "Arka Fotoğraf",
+        "select_file": "Dosya Seçin",
+        "click_to_upload": "Yüklemek için Tıklayın veya Sürükleyin",
+        "change_photo": "Fotoğrafı Değiştir",
+        "file_format": "JPG, PNG, WEBP, SVG",
+        "error_type": "Geçersiz dosya tipi."
+      },
+      "validation": {
+        "required_all": "Lütfen tüm alanları doldurun.",
+        "required_images": "Lütfen hem ön hem arka fotoğrafı yükleyin."
+      },
+      "labels": {
+        "gender": "Cinsiyet",
+        "body_type": "Manken Vücut Tipi",
+        "fit": "Ürün Kesimi",
+        "background": "Arka Plan",
+        "accessory": "Aksesuar",
+        "age": "Manken Yaşı",
+        "description": "Ürün Açıklaması"
+      },
+      "options": {
+        "gender": {
+          "female": "Kadın",
+          "male": "Erkek"
+        },
+        "body_type": {
+          "slim": "Zayıf",
+          "average": "Ortalama",
+          "plus_size": "Büyük Beden"
+        },
+        "fit": {
+          "slim": "Dar Kesim",
+          "regular": "Normal Kesim",
+          "oversized": "Bol Kesim"
+        },
+        "background": {
+          "black": "Siyah",
+          "white": "Beyaz",
+          "orange": "Turuncu",
+          "cafe": "Kafe Ortamı",
+          "urban": "Şehir Ortamı"
+        },
+        "accessory": {
+          "none": "Yok",
+          "bag": "Çanta",
+          "glasses": "Gözlük",
+          "wallet": "Cüzdan",
+          "car_key": "Maserati Anahtarı"
+        }
+      },
+      "placeholders": {
+        "description": "Ürün detaylarını buraya girebilirsiniz..."
+      },
+      "generate_button": "Ürün Oluştur"
+    },
+    "pricing": {
+      "title": "Dinamik Fiyatlandırma",
+      "estimated_cost": "Tahmini Maliyet",
+      "simulation_note": "Maliyetler ortalama kullanım bazında hesaplanmıştır.",
+      "reset": "Simülasyonu Sıfırla",
+      "product_bundle": "Ürün Paketi",
+      "bundles_subtext": "Ürün Paketleri",
+      "add_product": "Ürün Ekle",
+      "remove_product": "Ürün Çıkar",
+      "bundle_desc": "1 Metin + 4 Görsel + 1 Video"
+    },
+    "home": {
+      "cta": {
+        "request_installation": "Kurulum Talep Edin"
+      }
+    },
+    "analytics": {
+      "title": "Kullanım Analizi",
+      "view_daily": "Günlük",
+      "view_weekly": "Haftalık",
+      "view_monthly": "Aylık",
+      "total_requests": "Toplam İstek",
+      "estimated_cost": "Tahmini Maliyet",
+      "requests_per_day": "Günlük İstek Limiti (RPD)",
+      "usage": "Kullanım",
+      "limit_reached": "Günlük limit aşıldı!",
+      "empty_state": "Henüz kullanım verisi yok. Analizleri görmek için ürün oluşturun!",
+      "delete_model": "Model Verilerini Sıfırla",
+      "reset_all": "Tüm Verileri Sıfırla",
+      "confirm_reset_title": "Analiz Verilerini Sıfırla",
+      "confirm_reset_message": "Tüm kullanım verilerini ve maliyet hesaplamalarını silmek istediğinizden emin misiniz? Bu işlem geri alınamaz.",
+      "empty_state_subtitle": "Kullanim verilerini gormek icin urun olusturun.",
+      "model_desc": {
+        "gemini_20_flash": "Gorsel analiz ve kalite kontrol",
+        "gemini_25_flash": "SEO ve metin olusturma",
+        "gemini_3_pro_image": "Front/Back model gorseli uretimi",
+        "veo_31": "Video uretimi (primary)",
+        "veo_30": "Video uretimi (fallback)",
+        "unknown": "Bilinmeyen model"
+      }
+    },
+    "product": {
+      "title": "Ürün Detayı",
+      "download": "İndir",
+      "edit": "Düzenle",
+      "delete": "Sil",
+      "retry": "Yeniden Dene",
+      "save_changes": "Değişiklikleri Kaydet",
+      "cancel": "İptal",
+      "confirm_delete_title": "Ürünü Sil",
+      "confirm_delete_message": "Bu ürünü silmek istediğinizden emin misiniz? Bu işlem geri alınamaz.",
+      "delete_confirm_button": "Evet, Sil",
+      "edit_modal_title": "Ürünü Düzenle",
+      "update_success": "Ürün başarıyla güncellendi.",
+      "delete_success": "Ürün başarıyla silindi.",
+      "next_image": "Sonraki Görsel",
+      "prev_image": "Önceki Görsel",
+      "confirm_cancel": "İşlemi iptal etmek istediğinize emin misiniz?",
+      "cancel_job": "İşlemi İptal Et",
+      "retry_gen": "Yeniden Dene",
+      "delete_product": "Ürünü Sil",
+      "download_video": "Video İndir (MP4)",
+      "status": {
+        "writing_copy": "Metin Yazılıyor...",
+        "gen_front": "Ön Taraf Üretiliyor...",
+        "gen_back": "Arka Taraf Üretiliyor...",
+        "filming": "Video Çekiliyor...",
+        "processing": "İşleniyor...",
+        "analyzing": "Analiz ediliyor...",
+        "writing_opt": "Optimizasyon Yazılıyor..."
+      },
+      "create_video": "Video Oluştur",
+      "no_description": "Aciklama bulunmuyor.",
+      "video_generation_failed": "Video olusturulamadi: gecerli bir video baglantisi donmedi.",
+      "generating_video": "Video olusturuluyor...",
+      "copy_title": "Basligi Kopyala",
+      "id_label": "ID",
+      "copy_description": "Aciklamayi Kopyala",
+      "copied": "Kopyalandi!",
+      "copy": "Kopyala",
+      "download_video_tag": "MP4"
+    },
+    "notifications": {
+      "title": "Bildirimler",
+      "empty": "Yeni bildirim yok",
+      "clear_all": "Tümünü Temizle",
+      "copy_all": "Hata Kayıtlarını Kopyala",
+      "copied": "Kopyalandı!",
+      "processing_failed": "İşlem Başarısız",
+      "copy": "Kopyala",
+      "delete": "Sil"
+    },
+    "settings": {
+      "title": "Ayarlar",
+      "language": "Dil / Language",
+      "theme": "Tema Değiştir"
+    },
+    "common": {
+      "loading": "Yükleniyor...",
+      "error": "Bir hata oluştu.",
+      "success": "İşlem başarılı.",
+      "search_placeholder": "Ürünlerde ara...",
+      "confirm": "Onayla",
+      "yes": "Evet",
+      "no": "Hayır",
+      "just_now": "Az önce",
+      "no_desc": "Açıklama yok",
+      "retry": "Yeniden Dene"
+    },
+    "filters": {
+      "toggle": "Filtrele",
+      "clear": "Temizle",
+      "gender": {
+        "label": "Cinsiyet",
+        "all": "Tümü"
+      },
+      "age_range": {
+        "label": "Yaş Aralığı",
+        "all": "Tümü"
+      },
+      "status": {
+        "label": "Durum",
+        "all": "Tümü",
+        "finished": "Tamamlandı",
+        "running": "İşleniyor",
+        "exited": "Hata"
+      },
+      "sort": {
+        "label": "Sıralama",
+        "newest": "En Yeni",
+        "oldest": "En Eski"
+      }
+    },
+    "storage": {
+      "title": "Depolama Yönetimi",
+      "usage": "Depolama Kullanımı",
+      "used": "Kullanıldı",
+      "idb": "IndexedDB",
+      "local": "Yerel Hafıza",
+      "items": "Veritabanı Öğeleri",
+      "products": "Ürünler",
+      "products_desc": "Görseller & Veriler",
+      "drafts": "Taslaklar",
+      "drafts_desc": "Kaydedilmemiş Çalışmalar",
+      "settings": "Yerel Ayarlar",
+      "app_settings": "Uygulama Ayarları",
+      "app_settings_desc": "Tema, Dil, Varsayılanlar",
+      "item_count": "{count} Öğe",
+      "clear_modal": {
+        "title": "Depolamayı Temizle?",
+        "message": "{target} verisini silmek istediğinizden emin misiniz? Bu işlem geri alınamaz."
+      },
+      "actions": {
+        "clear": "Temizle",
+        "reset": "Uygulamayı Sıfırla"
+      }
+    },
+    "error_boundary": {
+      "title": "Bir hata olustu",
+      "message_fallback": "Beklenmeyen bir hata olustu.",
+      "reload": "Sayfayi Yenile"
     }
+  },
+  "en": {
+    "product": {
+      "title": "Product Detail",
+      "download": "Download",
+      "edit": "Edit",
+      "delete": "Delete",
+      "retry": "Retry",
+      "save_changes": "Save Changes",
+      "cancel": "Cancel",
+      "confirm_delete_title": "Delete Product",
+      "confirm_delete_message": "Are you sure you want to delete this product? This action cannot be undone.",
+      "delete_confirm_button": "Yes, Delete",
+      "edit_modal_title": "Edit Product",
+      "update_success": "Product updated successfully.",
+      "delete_success": "Product deleted successfully.",
+      "next_image": "Next Image",
+      "prev_image": "Previous Image",
+      "confirm_cancel": "Are you sure you want to cancel the job?",
+      "cancel_job": "Cancel Job",
+      "retry_gen": "Retry Generation",
+      "delete_product": "Delete Product",
+      "download_video": "Download Video",
+      "status": {
+        "writing_copy": "Writing Copy...",
+        "gen_front": "Generating Front...",
+        "gen_back": "Synthesizing Back...",
+        "filming": "Filming Video...",
+        "processing": "Processing...",
+        "analyzing": "Analyzing trends...",
+        "writing_opt": "Writing Optimization..."
+      },
+      "create_video": "Create Video",
+      "no_description": "No description provided.",
+      "video_generation_failed": "Video generation failed: no valid video link returned.",
+      "generating_video": "Generating video...",
+      "copy_title": "Copy title",
+      "id_label": "ID",
+      "copy_description": "Copy description",
+      "copied": "Copied!",
+      "copy": "Copy",
+      "download_video_tag": "MP4"
+    },
+    "notifications": {
+      "title": "Notifications",
+      "empty": "No new notifications",
+      "clear_all": "Clear All",
+      "copy_all": "Copy Error Logs",
+      "copied": "Copied!",
+      "processing_failed": "Processing Failed",
+      "copy": "Copy",
+      "delete": "Delete"
+    },
+    "settings": {
+      "title": "Settings",
+      "language": "Language / Dil",
+      "theme": "Toggle Theme"
+    },
+    "common": {
+      "loading": "Loading...",
+      "error": "An error occurred.",
+      "success": "Success.",
+      "search_placeholder": "Search products...",
+      "confirm": "Confirm",
+      "yes": "Yes",
+      "no": "No",
+      "just_now": "Just now",
+      "no_desc": "No description",
+      "retry": "Retry"
+    },
+    "filters": {
+      "toggle": "Filters",
+      "clear": "Clear",
+      "gender": {
+        "label": "Gender",
+        "all": "All"
+      },
+      "age_range": {
+        "label": "Age Range",
+        "all": "All"
+      },
+      "status": {
+        "label": "Status",
+        "all": "All",
+        "finished": "Finished",
+        "running": "Running",
+        "exited": "Failed"
+      },
+      "sort": {
+        "label": "Sort By",
+        "newest": "Newest",
+        "oldest": "Oldest"
+      }
+    },
+    "storage": {
+      "title": "Storage Management",
+      "usage": "Storage Usage",
+      "used": "Used",
+      "idb": "IndexedDB",
+      "local": "LocalStorage",
+      "items": "Database Items",
+      "products": "Products",
+      "products_desc": "Images & Metadata",
+      "drafts": "Drafts",
+      "drafts_desc": "Unsaved Work",
+      "settings": "Local Settings",
+      "app_settings": "App Settings",
+      "app_settings_desc": "Theme, Lang, Defaults",
+      "item_count": "{count} Item(s)",
+      "clear_modal": {
+        "title": "Clear Storage?",
+        "message": "Are you sure you want to clear {target}? This action cannot be undone."
+      },
+      "actions": {
+        "clear": "Clear",
+        "reset": "Reset Application"
+      }
+    },
+    "app_name": "Kabak AI",
+    "nav": {
+      "home": "Ana Sayfa",
+      "about": "Hakkımızda",
+      "ai_models": "AI Modelleri",
+      "open_source": "Açık Kaynak",
+      "contact": "İletişim",
+      "contact_email": "info.beydahsaglam@gmail.com",
+      "login": "Giriş",
+      "collection": "Koleksiyon",
+      "new_product": "Yeni Ürün",
+      "logout": "Çıkış"
+    },
+    "hero": {
+      "title": "AI ile Ürün Fotoğrafçılığında Devrim",
+      "subtitle": "Giyim ürünlerinizi profesyonel stüdyo kalitesinde görsellere dönüştürün. Manken seçimi, arka plan değişimi ve tanıtım videoları - hepsi yapay zeka gücüyle, saniyeler içinde.",
+      "cta_primary": "Ücretsiz Deneyin",
+      "cta_secondary": "Nasıl Çalışır?",
+      "badge": "AI-Powered Fashion Tech"
+    },
+    "features": {
+      "title": "AI Destekli Özellikler",
+      "subtitle": "E-ticaret işinizi büyüten, akıllı ve ölçeklenebilir araçlar",
+      "items": {
+        "mannequin": {
+          "title": "Akıllı Manken Sistemi",
+          "description": "Cinsiyet, yaş, vücut tipi ve ürün kesimi bazında optimize edilmiş mankenlerle ürünlerinizi sergileyin"
+        },
+        "background": {
+          "title": "Dinamik Arka Plan Motoru",
+          "description": "Stüdyo, kafe, şehir manzarası veya özel ortamlar - tek tıkla arka planınızı değiştirin"
+        },
+        "video": {
+          "title": "Otomatik Video Üretimi",
+          "description": "Ürünleriniz için profesyonel kalitede tanıtım videoları otomatik olarak oluşturun"
+        },
+        "accessories": {
+          "title": "Akıllı Aksesuar Ekleme",
+          "description": "Gözlük, çanta, takı ve daha fazlasını AI ile doğal bir şekilde görsellerinize entegre edin"
+        }
+      }
+    },
+    "about": {
+      "title": "Hakkımızda",
+      "subtitle": "E-ticaret için görsel üretimi yeniden tanımlıyoruz",
+      "description": "Kabak AI, moda ve giyim sektöründeki markaların stüdyo maliyetlerini %80'e kadar düşürmesini, üretim süresini 10 kat hızlandırmasını ve profesyonel kaliteyi demokratikleştirmesini sağlayan yapay zeka platformudur. Google Gemini altyapısı ile güçlendirilmiş sistemimiz, ham ürün fotoğraflarınızı satış odaklı görsellere dönüştürür.",
+      "stats": {
+        "cost_reduction": "%80 Maliyet Tasarrufu",
+        "time_saved": "10x Hızlı Üretim",
+        "quality": "Stüdyo Kalitesi"
+      },
+      "before_label": "Before",
+      "after_label": "After",
+      "slider_hint": "Drag the divider to compare."
+    },
+    "ai_models": {
+      "title": "AI Altyapısı & Fiyatlandırma",
+      "subtitle": "Modern Gemini modelleriyle güçlendirilmiş, şeffaf ve ölçeklenebilir altyapı",
+      "table": {
+        "use_case": "Kullanım Alanı",
+        "primary": "Birincil Model",
+        "fallback": "Yedek Model",
+        "cost": "Ort. Maliyet*",
+        "description": "Açıklama"
+      },
+      "items": {
+        "text": {
+          "use_case": "Metin & SEO",
+          "primary": "Gemini 3 Flash",
+          "fallback": "Gemini 2.0 Flash",
+          "cost": "~$0.01 / ürün",
+          "description": "Ürün açıklamaları, meta tagler ve SEO optimizasyonu"
+        },
+        "image_analysis": {
+          "use_case": "Görsel Analizi",
+          "primary": "Gemini 3 Flash",
+          "fallback": "Gemini 2.0 Pro",
+          "cost": "~$0.03 / ürün",
+          "description": "Ürün tanıma, renk/desen analizi ve kategorilendirme"
+        },
+        "image_gen": {
+          "use_case": "Görsel Üretimi",
+          "primary": "Gemini 3 Pro",
+          "fallback": "Imagen 3",
+          "cost": "~$0.15 / görsel",
+          "description": "Yüksek çözünürlüklü manken ve arka plan üretimi"
+        },
+        "video": {
+          "use_case": "Video Üretimi",
+          "primary": "Veo 3",
+          "fallback": "Veo 2",
+          "cost": "~$0.80 / video",
+          "description": "Sinematik ürün tanıtım videoları"
+        }
+      },
+      "pricing_note": "*Maliyetler tek bir üretim içindir ve Google Cloud API fiyatlandırmasına göre tahmin edilmiştir.",
+      "categories": {
+        "text": "Text Models",
+        "image": "Image Models",
+        "video": "Video Models",
+        "other": "Other Models"
+      },
+      "status": {
+        "primary": "Primary",
+        "fallback": "Fallback"
+      },
+      "rpd": "RPD",
+      "usage_info": "Live usage based on daily quota",
+      "model_details": {
+        "gemini_20_flash": "Fast analysis and fallback text generation.",
+        "gemini_25_flash": "Primary model for text and SEO generation.",
+        "gemini_3_pro_image": "Front/back model image generation.",
+        "veo_31": "Primary video generation model (preview).",
+        "veo_30": "Fallback video generation model.",
+        "unknown": "Undefined model."
+      }
+    },
+    "open_source": {
+      "title": "Açık Kaynak & Topluluk",
+      "subtitle": "Şeffaflık ve işbirliği ile büyüyen bir platform",
+      "description": "Kabak AI, tamamen açık kaynak kodludur. Kod tabanımızı inceleyebilir, katkıda bulunabilir veya kendi sürümünüzü oluşturabilirsiniz. AI sistemlerinin şeffaf olması gerektiğine inanıyoruz.",
+      "github_button": "GitHub'da Görüntüle",
+      "license": "MIT Lisansı altında yayınlanmıştır",
+      "cta": "Kurulum veya entegrasyon konusunda yardıma mı ihtiyacınız var?",
+      "cta_button": "Destek Alın"
+    },
+    "contact": {
+      "title": "İletişim",
+      "subtitle": "Sorularınız mı var? Bize ulaşın",
+      "contact_email": "info.beydahsaglam@gmail.com",
+      "email_label": "E-posta",
+      "phone_label": "Telefon",
+      "social_label": "Sosyal Medya & Bağlantılar",
+      "cta": "Projeniz için özel bir çözüme mi ihtiyacınız var?",
+      "cta_button": "İletişime Geçin",
+      "links": {
+        "github_personal": "GitHub (Kişisel)",
+        "github_brand": "GitHub (Kabak AI)",
+        "linkedin": "LinkedIn",
+        "youtube": "YouTube",
+        "website": "Web Sitesi"
+      }
+    },
+    "footer": {
+      "copyright": "© 2026 Kabak AI. Tüm hakları saklıdır.",
+      "made_with": "Türkiye'de ❤️ ile yapıldı",
+      "creator": "Beydah Sağlam tarafından geliştirilmiştir",
+      "creator_prefix": "Created by",
+      "creator_name": "Beydah Saglam"
+    },
+    "login": {
+      "title": "Giriş Yap",
+      "username_placeholder": "Kullanıcı adı",
+      "password_placeholder": "Şifre",
+      "submit_button": "Giriş",
+      "invalid_credentials": "Kullanıcı adı veya şifre hatalı.",
+      "account_locked": "Hesabınız geçici olarak kilitlendi.",
+      "try_again_after": "Tekrar denemek için kalan süre:",
+      "contact_prompt": "Eğer kullanıcı olmak istiyorsanız lütfen",
+      "contact_link": "iletişime geçin"
+    },
+    "collection": {
+      "title": "Koleksiyon",
+      "empty_state": "Henüz koleksiyon yok",
+      "create_new": "Yeni Ürün"
+    },
+    "new_product": {
+      "title": "Yeni Ürün Girişi",
+      "back_to_collection": "← Koleksiyona Dön",
+      "upload": {
+        "front": "Ön Fotoğraf",
+        "back": "Arka Fotoğraf",
+        "select_file": "Dosya Seçin",
+        "click_to_upload": "Yüklemek için Tıklayın veya Sürükleyin",
+        "change_photo": "Fotoğrafı Değiştir",
+        "file_format": "JPG, PNG, WEBP, SVG",
+        "error_type": "Geçersiz dosya tipi."
+      },
+      "validation": {
+        "required_all": "Lütfen tüm alanları doldurun.",
+        "required_images": "Lütfen hem ön hem arka fotoğrafı yükleyin."
+      },
+      "labels": {
+        "gender": "Cinsiyet",
+        "body_type": "Manken Vücut Tipi",
+        "fit": "Ürün Kesimi",
+        "background": "Arka Plan",
+        "accessory": "Aksesuar",
+        "age": "Manken Yaşı",
+        "description": "Ürün Açıklaması"
+      },
+      "options": {
+        "gender": {
+          "female": "Kadın",
+          "male": "Erkek"
+        },
+        "body_type": {
+          "slim": "Zayıf",
+          "average": "Ortalama",
+          "plus_size": "Büyük Beden"
+        },
+        "fit": {
+          "slim": "Dar Kesim",
+          "regular": "Normal Kesim",
+          "oversized": "Bol Kesim"
+        },
+        "background": {
+          "black": "Siyah",
+          "white": "Beyaz",
+          "orange": "Turuncu",
+          "cafe": "Kafe Ortamı",
+          "urban": "Şehir Ortamı"
+        },
+        "accessory": {
+          "none": "Yok",
+          "bag": "Çanta",
+          "glasses": "Gözlük",
+          "wallet": "Cüzdan",
+          "car_key": "Maserati Anahtarı"
+        }
+      },
+      "placeholders": {
+        "description": "Ürün detaylarını buraya girebilirsiniz..."
+      },
+      "generate_button": "Ürün Oluştur"
+    },
+    "pricing": {
+      "title": "Dinamik Fiyatlandırma",
+      "estimated_cost": "Tahmini Maliyet",
+      "simulation_note": "Maliyetler ortalama kullanım bazında hesaplanmıştır.",
+      "reset": "Simülasyonu Sıfırla",
+      "product_bundle": "Ürün Paketi",
+      "bundles_subtext": "Ürün Paketleri",
+      "add_product": "Ürün Ekle",
+      "remove_product": "Ürün Çıkar",
+      "bundle_desc": "1 Metin + 4 Görsel + 1 Video"
+    },
+    "home": {
+      "cta": {
+        "request_installation": "Kurulum Talep Edin"
+      }
+    },
+    "analytics": {
+      "title": "Kullanım Analizi",
+      "view_daily": "Günlük",
+      "view_weekly": "Haftalık",
+      "view_monthly": "Aylık",
+      "total_requests": "Toplam İstek",
+      "estimated_cost": "Tahmini Maliyet",
+      "requests_per_day": "Günlük İstek Limiti (RPD)",
+      "usage": "Kullanım",
+      "limit_reached": "Günlük limit aşıldı!",
+      "empty_state": "Henüz kullanım verisi yok. Analizleri görmek için ürün oluşturun!",
+      "delete_model": "Model Verilerini Sıfırla",
+      "reset_all": "Tüm Verileri Sıfırla",
+      "confirm_reset_title": "Analiz Verilerini Sıfırla",
+      "confirm_reset_message": "Tüm kullanım verilerini ve maliyet hesaplamalarını silmek istediğinizden emin misiniz? Bu işlem geri alınamaz.",
+      "empty_state_subtitle": "Generate products to see usage data.",
+      "model_desc": {
+        "gemini_20_flash": "Visual analysis and quality control",
+        "gemini_25_flash": "SEO and text generation",
+        "gemini_3_pro_image": "Front/back model image generation",
+        "veo_31": "Video generation (primary)",
+        "veo_30": "Video generation (fallback)",
+        "unknown": "Unknown model"
+      }
+    },
+    "error_boundary": {
+      "title": "Something went wrong",
+      "message_fallback": "An unexpected error occurred.",
+      "reload": "Reload page"
+    }
+  }
 }

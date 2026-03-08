@@ -50,7 +50,7 @@ export const F_Filter_Bar: React.FC<Filter_Bar_Props> = ({ p_on_filter_change })
     const has_active_filters = filters.gender !== 'all' || filters.status !== 'all' || filters.age_range !== 'all' || filters.search !== '';
 
     return (
-        <div className="bg-white dark:bg-bg-dark rounded-xl border border-secondary/20 shadow-sm p-4 mb-6 transition-all relative z-20">
+        <div className="bg-white dark:bg-bg-dark rounded-xl border border-secondary/20 shadow-sm p-4 mb-6 transition-all relative z-[200] overflow-visible">
             {/* Top Row: Search & Toggle */}
             <div className="flex items-center gap-4">
                 <div className="relative flex-1">
@@ -89,7 +89,7 @@ export const F_Filter_Bar: React.FC<Filter_Bar_Props> = ({ p_on_filter_change })
 
             {/* Expanded Filters */}
             {(is_expanded || has_active_filters) && (
-                <div className="mt-4 pt-4 border-t border-secondary/10 grid grid-cols-2 md:grid-cols-5 gap-4 animate-fade-in">
+                <div className="mt-4 pt-4 border-t border-secondary/10 grid grid-cols-2 md:grid-cols-5 gap-4 animate-fade-in relative z-[220] overflow-visible">
 
                     {/* Gender */}
                     <F_Combobox

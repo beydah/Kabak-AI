@@ -1,58 +1,49 @@
 {
-    "models": [
-        {
-            "model_id": "gemini-3-pro",
-            "category": "Text Generation",
-            "daily_limit_rpd": 250,
-            "minute_limit_rpm": 25,
-            "current_usage_today": 0,
-            "is_primary": true,
-            "cost_per_request": 0.0005
-        },
-        {
-            "model_id": "gemini-3-flash",
-            "category": "Text Generation",
-            "daily_limit_rpd": 10000,
-            "minute_limit_rpm": 1000,
-            "current_usage_today": 0,
-            "is_primary": false,
-            "cost_per_request": 0.0001
-        },
-        {
-            "model_id": "imagen-4.0-fast-generate",
-            "category": "Image",
-            "daily_limit_rpd": 70,
-            "minute_limit_rpm": 10,
-            "current_usage_today": 0,
-            "is_primary": true,
-            "cost_per_request": 0.04
-        },
-        {
-            "model_id": "imagen-4.0-generate",
-            "category": "Image",
-            "daily_limit_rpd": 70,
-            "minute_limit_rpm": 10,
-            "current_usage_today": 0,
-            "is_primary": false,
-            "cost_per_request": 0.04
-        },
-        {
-            "model_id": "veo-3.0-fast-generate",
-            "category": "Video",
-            "daily_limit_rpd": 10,
-            "minute_limit_rpm": 2,
-            "current_usage_today": 0,
-            "is_primary": true,
-            "cost_per_request": 0.10
-        },
-        {
-            "model_id": "veo-3.0-generate",
-            "category": "Video",
-            "daily_limit_rpd": 10,
-            "minute_limit_rpm": 2,
-            "current_usage_today": 0,
-            "is_primary": false,
-            "cost_per_request": 0.10
-        }
-    ]
+  "models": [
+    {
+      "model_id": "gemini-2.5-flash",
+      "category": "Text Generation",
+      "daily_limit_rpd": 1500,
+      "minute_limit_rpm": 120,
+      "current_usage_today": 0,
+      "is_primary": true,
+      "cost_per_request": 0.0001
+    },
+    {
+      "model_id": "gemini-2.0-flash",
+      "category": "Text Generation",
+      "daily_limit_rpd": 1500,
+      "minute_limit_rpm": 120,
+      "current_usage_today": 0,
+      "is_primary": false,
+      "cost_per_request": 0.0001
+    },
+    {
+      "model_id": "models/gemini-3-pro-image-preview",
+      "category": "Image",
+      "daily_limit_rpd": 50,
+      "minute_limit_rpm": 10,
+      "current_usage_today": 0,
+      "is_primary": true,
+      "cost_per_request": 0.002
+    },
+    {
+      "model_id": "veo-3.1-generate-preview",
+      "category": "Video",
+      "daily_limit_rpd": 10,
+      "minute_limit_rpm": 2,
+      "current_usage_today": 0,
+      "is_primary": true,
+      "cost_per_request": 0.05
+    },
+    {
+      "model_id": "veo-3.0-generate-001",
+      "category": "Video",
+      "daily_limit_rpd": 10,
+      "minute_limit_rpm": 2,
+      "current_usage_today": 0,
+      "is_primary": false,
+      "cost_per_request": 0.05
+    }
+  ]
 }

@@ -1,14 +1,40 @@
 import React, { useEffect, useState } from 'react';
 import { F_Text } from '../atoms/text';
 import { F_Get_Text } from '../../utils/i18n_utils';
-import { F_Get_Models, F_Increment_Usage, F_Check_Daily_Reset, I_Model_Config } from '../../utils/model_utils';
-import { RefreshCw, Zap, Shield, ArrowRight, RotateCcw, Plus, Minus, Package } from 'lucide-react';
+import { F_Get_Models, F_Increment_Usage, F_Decrement_Usage, F_Check_Daily_Reset, I_Model_Config } from '../../utils/model_utils';
+import { RotateCcw, Plus, Minus, Package, BrainCircuit, ImageIcon, Film, Info } from 'lucide-react';
+
+const CATEGORY_ORDER = ['Text Generation', 'Image', 'Video'] as const;
+
+const F_Get_Category_Text_Key = (category: string) => {
+    if (category === 'Text Generation') return 'ai_models.categories.text';
+    if (category === 'Image') return 'ai_models.categories.image';
+    if (category === 'Video') return 'ai_models.categories.video';
+    return 'ai_models.categories.other';
+};
+
+const F_Get_Model_Detail_Key = (model_id: string) => {
+    const key_map: Record<string, string> = {
+        'gemini-2.0-flash': 'ai_models.model_details.gemini_20_flash',
+        'gemini-2.5-flash': 'ai_models.model_details.gemini_25_flash',
+        'models/gemini-3-pro-image-preview': 'ai_models.model_details.gemini_3_pro_image',
+        'veo-3.1-generate-preview': 'ai_models.model_details.veo_31',
+        'veo-3.0-generate-001': 'ai_models.model_details.veo_30'
+    };
+
+    return key_map[model_id] || 'ai_models.model_details.unknown';
+};
+
+const F_Get_Category_Icon = (category: string) => {
+    if (category === 'Text Generation') return <BrainCircuit size={18} className="text-primary" />;
+    if (category === 'Image') return <ImageIcon size={18} className="text-primary" />;
+    if (category === 'Video') return <Film size={18} className="text-primary" />;
+    return <Package size={18} className="text-primary" />;
+};
 
 export const F_AI_Models_Section: React.FC = () => {
     const [models, set_models] = useState<I_Model_Config[]>([]);
     const [grouped_models, set_grouped_models] = useState<Record<string, I_Model_Config[]>>({});
-
-    // Bundle State
     const [bundle_count, set_bundle_count] = useState(0);
 
     useEffect(() => {
@@ -20,127 +46,97 @@ export const F_AI_Models_Section: React.FC = () => {
         set_models(data);
 
         const groups: Record<string, I_Model_Config[]> = {};
-        // Ensure Text, Image, Video order if possible, but object keys are unordered.
-        // We will map over a fixed order array for rendering.
-        data.forEach(m => {
-            if (!groups[m.category]) groups[m.category] = [];
-            groups[m.category].push(m);
+        data.forEach((model) => {
+            if (!groups[model.category]) groups[model.category] = [];
+            groups[model.category].push(model);
         });
         set_grouped_models(groups);
     };
 
     const F_Reset_Usage = () => {
-        F_Check_Daily_Reset(true); // Force reset
+        F_Check_Daily_Reset(true);
         set_bundle_count(0);
         F_Load_Data();
     };
 
-    // --- BUNDLING LOGIC ---
-    // 1 Bundle = 1 Text, 4 Image, 1 Video
-
-    const F_Handle_Bundle_Change = (change: number) => {
-        if (change > 0) {
-            // Cap at 20 Bundles
-            if (bundle_count >= 20) return;
-
-            // Add Bundle
-            set_bundle_count(prev => prev + 1);
-            F_Increment_Category_Usage('Text Generation', 1);
-            F_Increment_Category_Usage('Image', 4);
-            F_Increment_Category_Usage('Video', 1);
-        } else {
-            // Remove Bundle (only if > 0)
-            if (bundle_count > 0) {
-                set_bundle_count(prev => prev - 1);
-                F_Decrement_Category_Usage('Text Generation', 1);
-                F_Decrement_Category_Usage('Image', 4);
-                F_Decrement_Category_Usage('Video', 1);
-            }
-        }
-        F_Load_Data(); // Refresh UI
-    };
-
     const F_Increment_Category_Usage = (category: string, amount: number) => {
-        // Find Primary and Fallback models for this category
-        const data = F_Get_Models(); // Get fresh data
-        const catModels = data.filter(m => m.category === category);
-        const primary = catModels.find(m => m.is_primary);
-        const fallback = catModels.find(m => !m.is_primary);
+        const data = F_Get_Models();
+        const category_models = data.filter((model) => model.category === category);
+        const primary = category_models.find((model) => model.is_primary);
+        const fallback = category_models.find((model) => !model.is_primary);
 
         if (!primary) return;
 
         let remaining = amount;
 
-        // Fill Primary first
-        const primaryAvailable = Math.max(0, primary.daily_limit_rpd - primary.current_usage_today);
-        const toPrimary = Math.min(remaining, primaryAvailable);
+        const primary_capacity = Math.max(0, primary.daily_limit_rpd - primary.current_usage_today);
+        const primary_alloc = Math.min(remaining, primary_capacity);
 
-        if (toPrimary > 0) {
-            // Loop for simulator effect (expensive in loop but fine for small demo numbers)
-            // Ideally we'd have a bulk update method, but we have F_Increment_Usage
-            for (let i = 0; i < toPrimary; i++) F_Increment_Usage(primary.model_id);
-            remaining -= toPrimary;
+        if (primary_alloc > 0) {
+            for (let i = 0; i < primary_alloc; i++) {
+                F_Increment_Usage(primary.model_id);
+            }
+            remaining -= primary_alloc;
         }
 
-        // Fill Fallback with remaining
         if (remaining > 0 && fallback) {
-            for (let i = 0; i < remaining; i++) F_Increment_Usage(fallback.model_id);
+            for (let i = 0; i < remaining; i++) {
+                F_Increment_Usage(fallback.model_id);
+            }
         }
     };
 
     const F_Decrement_Category_Usage = (category: string, amount: number) => {
-        // Reverse logic: Remove from Fallback first (LIFOish logic for cost simulation consistency)
-        // Actually, we just want to reduce the usage.
-        // Simulating "undo" is tricky without history, but we can assume:
-        // If Usage > 0, remove.
-        // If Fallback has usage, remove from there first. Then Primary.
-
-        // CUSTOM DECREMENT LOGIC NEEDED in Model Utils? 
-        // Current utils only support Increment. 
-        // I will implement a local 'Decrement' helper by manually modifying storage here for simplicity 
-        // or just accept that "Simulate" usually implies forward. 
-        // User requested: "decrement (-) logic must follow the same path in reverse".
-
-        // We will read current usage, modify, save.
-        const storedUsage = JSON.parse(localStorage.getItem('kabak_ai_model_usage') || '{}');
-
         const data = F_Get_Models();
-        const catModels = data.filter(m => m.category === category);
-        const primary = catModels.find(m => m.is_primary);
-        const fallback = catModels.find(m => !m.is_primary);
+        const category_models = data.filter((model) => model.category === category);
+        const primary = category_models.find((model) => model.is_primary);
+        const fallback = category_models.find((model) => !model.is_primary);
 
         if (!primary) return;
 
-        let remainingToRemove = amount;
+        let remaining = amount;
 
-        // Remove from Fallback first
-        if (fallback) {
-            const fallbackUsage = storedUsage[fallback.model_id] || 0;
-            const removeFallback = Math.min(remainingToRemove, fallbackUsage);
-            if (removeFallback > 0) {
-                storedUsage[fallback.model_id] = fallbackUsage - removeFallback;
-                remainingToRemove -= removeFallback;
+        if (fallback && remaining > 0) {
+            const fallback_remove = Math.min(remaining, fallback.current_usage_today);
+            if (fallback_remove > 0) {
+                F_Decrement_Usage(fallback.model_id, fallback_remove);
+                remaining -= fallback_remove;
             }
         }
 
-        // Remove from Primary next
-        const primaryUsage = storedUsage[primary.model_id] || 0;
-        const removePrimary = Math.min(remainingToRemove, primaryUsage);
-        if (removePrimary > 0) {
-            storedUsage[primary.model_id] = primaryUsage - removePrimary;
+        if (remaining > 0) {
+            const primary_remove = Math.min(remaining, primary.current_usage_today);
+            if (primary_remove > 0) {
+                F_Decrement_Usage(primary.model_id, primary_remove);
+            }
         }
-
-        localStorage.setItem('kabak_ai_model_usage', JSON.stringify(storedUsage));
     };
 
+    const F_Handle_Bundle_Change = (delta: number) => {
+        if (delta > 0) {
+            if (bundle_count >= 20) return;
 
-    // Total Cost
-    const totalCost = models.reduce((total, m) => total + (m.current_usage_today * (m.cost_per_request || 0)), 0);
+            set_bundle_count((prev) => prev + 1);
+            F_Increment_Category_Usage('Text Generation', 1);
+            F_Increment_Category_Usage('Image', 4);
+            F_Increment_Category_Usage('Video', 1);
+        } else {
+            if (bundle_count <= 0) return;
+
+            set_bundle_count((prev) => prev - 1);
+            F_Decrement_Category_Usage('Text Generation', 1);
+            F_Decrement_Category_Usage('Image', 4);
+            F_Decrement_Category_Usage('Video', 1);
+        }
+
+        F_Load_Data();
+    };
+
+    const total_cost = models.reduce((sum, model) => sum + (model.current_usage_today * (model.cost_per_request || 0)), 0);
 
     return (
         <section id="ai-models" className="py-20 bg-secondary/5">
             <div className="container mx-auto px-4 max-w-7xl">
-                {/* Header */}
                 <div className="text-center mb-12">
                     <F_Text p_variant="h1" p_class_name="mb-4">
                         {F_Get_Text('ai_models.title')}
@@ -151,11 +147,7 @@ export const F_AI_Models_Section: React.FC = () => {
                 </div>
 
                 <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-
-                    {/* LEFT COLUMN (Controls & Pricing) - Span 4 */}
                     <div className="lg:col-span-4 space-y-6">
-
-                        {/* BUNDLE CARD */}
                         <div className="bg-white dark:bg-bg-dark rounded-2xl p-6 border border-secondary/20 shadow-sm relative overflow-hidden">
                             <div className="absolute top-0 right-0 p-4 opacity-10">
                                 <Package size={100} className="text-primary" />
@@ -174,6 +166,7 @@ export const F_AI_Models_Section: React.FC = () => {
                                     onClick={() => F_Handle_Bundle_Change(-1)}
                                     disabled={bundle_count === 0}
                                     className="w-12 h-12 flex items-center justify-center rounded-lg bg-white dark:bg-bg-dark border border-secondary/20 text-secondary hover:text-primary hover:border-primary/50 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+                                    title={F_Get_Text('pricing.remove_product')}
                                 >
                                     <Minus size={20} />
                                 </button>
@@ -191,13 +184,13 @@ export const F_AI_Models_Section: React.FC = () => {
                                     onClick={() => F_Handle_Bundle_Change(1)}
                                     disabled={bundle_count >= 20}
                                     className="w-12 h-12 flex items-center justify-center rounded-lg bg-primary text-white shadow-lg shadow-primary/30 hover:bg-primary/90 transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed disabled:shadow-none"
+                                    title={F_Get_Text('pricing.add_product')}
                                 >
                                     <Plus size={20} />
                                 </button>
                             </div>
                         </div>
 
-                        {/* PRICING CARD */}
                         <div className="bg-white dark:bg-bg-dark rounded-2xl p-6 border border-secondary/20 shadow-sm">
                             <h3 className="text-lg font-bold mb-4 text-text-light dark:text-text-dark">
                                 {F_Get_Text('pricing.estimated_cost')}
@@ -205,7 +198,7 @@ export const F_AI_Models_Section: React.FC = () => {
 
                             <div className="p-6 bg-primary/5 rounded-xl border border-primary/20 mb-4 text-center">
                                 <span className="text-4xl font-black text-text-light dark:text-text-dark">
-                                    ${totalCost.toFixed(4)}
+                                    ${total_cost.toFixed(4)}
                                 </span>
                             </div>
 
@@ -217,76 +210,76 @@ export const F_AI_Models_Section: React.FC = () => {
                                 <span>{F_Get_Text('pricing.reset')}</span>
                             </button>
                         </div>
-
                     </div>
 
-
-                    {/* RIGHT COLUMN (Model List) - Span 8 */}
                     <div className="lg:col-span-8 space-y-6">
-                        {['Text Generation', 'Image', 'Video'].map((category) => {
-                            const categoryModels = grouped_models[category] || [];
-                            if (categoryModels.length === 0) return null;
+                        {CATEGORY_ORDER.map((category) => {
+                            const category_models = grouped_models[category] || [];
+                            if (category_models.length === 0) return null;
 
                             return (
                                 <div key={category} className="bg-white dark:bg-bg-dark rounded-2xl shadow-sm border border-secondary/20 overflow-hidden">
-                                    {/* Category Header */}
                                     <div className="px-6 py-3 bg-primary/5 border-b border-primary/10 flex items-center justify-between">
                                         <h3 className="font-bold text-text-light dark:text-text-dark flex items-center gap-2">
-                                            {category === 'Text Generation' && <span className="">📝 Text Models</span>}
-                                            {category === 'Image' && <span className="">🖼️ Image Models</span>}
-                                            {category === 'Video' && <span className="">🎥 Video Models</span>}
+                                            {F_Get_Category_Icon(category)}
+                                            {F_Get_Text(F_Get_Category_Text_Key(category))}
                                         </h3>
                                     </div>
 
                                     <div className="p-4 grid grid-cols-1 md:grid-cols-2 gap-4">
-                                        {categoryModels.map((model) => {
-                                            const isPrimary = model.is_primary;
-                                            const usagePercent = Math.min(100, (model.current_usage_today / model.daily_limit_rpd) * 100);
+                                        {category_models.map((model) => {
+                                            const usage_percent = Math.min(100, (model.current_usage_today / model.daily_limit_rpd) * 100);
+                                            const detail_key = F_Get_Model_Detail_Key(model.model_id);
 
                                             return (
                                                 <div
-                                                    key={model.model_id}
-                                                    className={`relative rounded-xl border p-4 transition-all ${isPrimary
+                                                    key={`${category}-${model.model_id}`}
+                                                    className={`relative rounded-xl border p-4 transition-all ${model.is_primary
                                                         ? 'border-primary/30 bg-primary/5'
                                                         : 'border-secondary/20 bg-transparent'
                                                         }`}
                                                 >
-                                                    <div className="flex justify-between items-start mb-2">
-                                                        <div>
-                                                            <div className="flex items-center gap-2">
-                                                                <span className="font-bold text-sm text-text-light dark:text-text-dark">
+                                                    <div className="flex justify-between items-start mb-2 gap-3">
+                                                        <div className="min-w-0">
+                                                            <div className="flex items-center gap-2 flex-wrap">
+                                                                <span className="font-bold text-sm text-text-light dark:text-text-dark break-all">
                                                                     {model.model_id}
                                                                 </span>
-                                                                {isPrimary ? (
-                                                                    <span className="text-[9px] font-bold uppercase text-green-600 bg-green-100 px-1.5 py-0.5 rounded">Primary</span>
+                                                                {model.is_primary ? (
+                                                                    <span className="text-[9px] font-bold uppercase text-green-600 bg-green-100 px-1.5 py-0.5 rounded">
+                                                                        {F_Get_Text('ai_models.status.primary')}
+                                                                    </span>
                                                                 ) : (
-                                                                    <span className="text-[9px] font-bold uppercase text-orange-600 bg-orange-100 px-1.5 py-0.5 rounded">Fallback</span>
+                                                                    <span className="text-[9px] font-bold uppercase text-orange-600 bg-orange-100 px-1.5 py-0.5 rounded">
+                                                                        {F_Get_Text('ai_models.status.fallback')}
+                                                                    </span>
                                                                 )}
                                                             </div>
+                                                            <p className="text-xs text-secondary mt-1 line-clamp-2">
+                                                                {F_Get_Text(detail_key)}
+                                                            </p>
                                                         </div>
-                                                        <div className="text-right">
+
+                                                        <div className="text-right shrink-0">
                                                             <span className="block text-xs font-mono font-bold text-text-light dark:text-text-dark">
                                                                 {model.current_usage_today.toLocaleString()}
                                                             </span>
                                                             <span className="text-[10px] text-secondary">
-                                                                / {model.daily_limit_rpd.toLocaleString()} RPD
+                                                                / {model.daily_limit_rpd.toLocaleString()} {F_Get_Text('ai_models.rpd')}
                                                             </span>
                                                         </div>
                                                     </div>
 
-                                                    {/* Warning if switching to fallback */}
-                                                    {!isPrimary && model.current_usage_today > 0 && (
-                                                        <div className="absolute top-2 right-2 flex h-2 w-2">
-                                                            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-orange-400 opacity-75"></span>
-                                                            <span className="relative inline-flex rounded-full h-2 w-2 bg-orange-500"></span>
-                                                        </div>
-                                                    )}
-
                                                     <div className="h-1.5 w-full bg-secondary/10 rounded-full overflow-hidden mt-2">
                                                         <div
-                                                            className={`h-full rounded-full transition-all duration-500 ${usagePercent > 90 ? 'bg-red-500' : 'bg-primary'}`}
-                                                            style={{ width: `${usagePercent}%` }}
+                                                            className={`h-full rounded-full transition-all duration-500 ${usage_percent > 90 ? 'bg-red-500' : 'bg-primary'}`}
+                                                            style={{ width: `${usage_percent}%` }}
                                                         />
+                                                    </div>
+
+                                                    <div className="mt-3 flex items-center gap-1 text-[10px] text-secondary">
+                                                        <Info size={12} />
+                                                        <span>{F_Get_Text('ai_models.usage_info')}</span>
                                                     </div>
                                                 </div>
                                             );

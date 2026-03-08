@@ -202,7 +202,7 @@ export const F_Product_Card: React.FC<Product_Card_Props> = ({ p_product, p_navi
                                         onClick={(e) => e.stopPropagation()}
                                         className="flex items-center gap-1.5 px-3 py-1.5 bg-primary/90 hover:bg-primary text-white text-xs font-bold rounded-full shadow-lg backdrop-blur-sm transition-all hover:scale-105"
                                     >
-                                        <span>MP4</span>
+                                        <span>{F_Get_Text('product.download_video_tag')}</span>
                                     </a>
                                 </div>
                             )}

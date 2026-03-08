@@ -124,12 +124,12 @@ export const F_Storage_Dashboard: React.FC = () => {
                         <div
                             className="h-full bg-primary transition-all duration-1000"
                             style={{ width: `${idb_percent}%` }}
-                            title={`IndexedDB: ${F_Format_Bytes(stats.indexedDBSize)}`}
+                            title={`${F_Get_Text('storage.idb')}: ${F_Format_Bytes(stats.indexedDBSize)}`}
                         />
                         <div
                             className="h-full bg-purple-500 transition-all duration-1000"
                             style={{ width: `${ls_percent}%` }}
-                            title={`LocalStorage: ${F_Format_Bytes(stats.localStoragesize)}`}
+                            title={`${F_Get_Text('storage.local')}: ${F_Format_Bytes(stats.localStoragesize)}`}
                         />
                     </div>
 

@@ -33,3 +33,10 @@ export const F_Increment_Usage = (p_model_id: string) => {
     const current = SESSION_USAGE[p_model_id] || 0;
     SESSION_USAGE[p_model_id] = current + 1;
 };
+
+
+export const F_Decrement_Usage = (p_model_id: string, p_amount = 1) => {
+    const current = SESSION_USAGE[p_model_id] || 0;
+    const next_value = Math.max(0, current - Math.max(1, p_amount));
+    SESSION_USAGE[p_model_id] = next_value;
+};

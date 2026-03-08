@@ -41,7 +41,7 @@ export const F_Combobox: React.FC<ComboboxProps> = ({
     const selectedOption = options.find(opt => opt.value === value);
 
     return (
-        <div className={`space-y-1 ${className}`} ref={containerRef}>
+        <div className={`space-y-1 relative z-10 ${className}`} ref={containerRef}>
             {label && (
                 <label className="text-xs font-semibold text-secondary uppercase block">
                     {label}
@@ -65,7 +65,7 @@ export const F_Combobox: React.FC<ComboboxProps> = ({
 
                 {/* Dropdown Menu */}
                 {isOpen && (
-                    <div className="absolute z-50 w-full mt-1 overflow-hidden bg-white/90 dark:bg-[#1A1A1A]/90 backdrop-blur-md border border-secondary/10 rounded-xl shadow-xl animate-in fade-in zoom-in-95 duration-200 origin-top">
+                    <div className="absolute z-[300] w-full mt-1 overflow-hidden bg-white/95 dark:bg-[#1A1A1A]/95 backdrop-blur-md border border-secondary/10 rounded-xl shadow-2xl animate-in fade-in zoom-in-95 duration-200 origin-top">
                         <ul className="max-h-60 overflow-y-auto py-1 scrollbar-thin scrollbar-thumb-secondary/20 hover:scrollbar-thumb-secondary/40">
                             {options.map((option) => {
                                 const isSelected = option.value === value;

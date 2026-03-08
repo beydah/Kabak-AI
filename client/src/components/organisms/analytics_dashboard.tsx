@@ -6,14 +6,37 @@ import { F_Text } from '../atoms/text';
 import { F_Get_Text } from '../../utils/i18n_utils';
 import { F_Confirmation_Modal } from '../molecules/confirmation_modal';
 
-const MODEL_INFO: Record<string, { rpd: number; desc: string; label: string; color: string }> = {
-    'gemini-2.0-flash': { rpd: 1500, desc: 'Visual Analysis & QC', label: 'Gemini 2.0 Flash', color: 'from-blue-500 to-cyan-400' },
-    'gemini-2.5-flash': { rpd: 1500, desc: 'Advanced SEO Generation', label: 'Gemini 2.5 Flash', color: 'from-emerald-500 to-teal-400' },
-    'gemini-1.5-pro': { rpd: 50, desc: 'Advanced Creative Writing', label: 'Gemini 1.5 Pro', color: 'from-purple-500 to-pink-500' },
-    'models/gemini-3-pro-image-preview': { rpd: 50, desc: 'High-Fidelity VTO', label: 'Gemini 3 Pro', color: 'from-amber-500 to-orange-500' },
-    'veo-3.0-generate-001': { rpd: 50, desc: 'Video Generation', label: 'Veo 3.0', color: 'from-red-500 to-rose-500' },
-    // Legacy / Fallback
-    'gemini-1.5-flash': { rpd: 1500, desc: 'Legacy Fallback', label: 'Gemini 1.5 Flash', color: 'from-gray-500 to-gray-400' },
+const MODEL_INFO: Record<string, { rpd: number; desc_key: string; label: string; color: string }> = {
+    'gemini-2.0-flash': {
+        rpd: 1500,
+        desc_key: 'analytics.model_desc.gemini_20_flash',
+        label: 'Gemini 2.0 Flash',
+        color: 'from-blue-500 to-cyan-400'
+    },
+    'gemini-2.5-flash': {
+        rpd: 1500,
+        desc_key: 'analytics.model_desc.gemini_25_flash',
+        label: 'Gemini 2.5 Flash',
+        color: 'from-emerald-500 to-teal-400'
+    },
+    'models/gemini-3-pro-image-preview': {
+        rpd: 50,
+        desc_key: 'analytics.model_desc.gemini_3_pro_image',
+        label: 'Gemini 3 Pro Image',
+        color: 'from-amber-500 to-orange-500'
+    },
+    'veo-3.1-generate-preview': {
+        rpd: 10,
+        desc_key: 'analytics.model_desc.veo_31',
+        label: 'Veo 3.1 Preview',
+        color: 'from-red-500 to-rose-500'
+    },
+    'veo-3.0-generate-001': {
+        rpd: 10,
+        desc_key: 'analytics.model_desc.veo_30',
+        label: 'Veo 3.0',
+        color: 'from-red-500 to-pink-500'
+    }
 };
 
 export const F_Analytics_Dashboard: React.FC = () => {
@@ -174,7 +197,7 @@ export const F_Analytics_Dashboard: React.FC = () => {
                         <AlertTriangle size={32} />
                     </div>
                     <p className="text-secondary font-medium text-lg">{F_Get_Text('analytics.empty_state')}</p>
-                    <p className="text-sm text-secondary/60 mt-2">Generate some products to see usage data.</p>
+                    <p className="text-sm text-secondary/60 mt-2">{F_Get_Text('analytics.empty_state_subtitle')}</p>
                 </div>
             )}
 
@@ -183,7 +206,7 @@ export const F_Analytics_Dashboard: React.FC = () => {
                 {metrics.map((m) => {
                     const info = MODEL_INFO[m.model_id] || {
                         rpd: 100,
-                        desc: 'Unknown Model',
+                        desc_key: 'analytics.model_desc.unknown',
                         label: m.model_id,
                         color: 'from-gray-500 to-gray-400'
                     };
@@ -218,7 +241,7 @@ export const F_Analytics_Dashboard: React.FC = () => {
                                             <div className="group/tooltip relative">
                                                 <Info size={14} className="text-secondary/60 hover:text-primary transition-colors cursor-help" />
                                                 <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-3 py-1.5 bg-black/90 text-white text-[10px] rounded-lg shadow-xl opacity-0 group-hover/tooltip:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-50 backdrop-blur-sm">
-                                                    {info.desc}
+                                                    {F_Get_Text(info.desc_key)}
                                                     <div className="absolute top-full left-1/2 -translate-x-1/2 -mt-1 border-4 border-transparent border-t-black/90"></div>
                                                 </div>
                                             </div>

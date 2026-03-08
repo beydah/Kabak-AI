@@ -208,7 +208,6 @@ export const F_Job_Provider: React.FC<{ children: React.ReactNode }> = ({ childr
             const is_workflow_done =
                 product.front_status === 'completed' &&
                 product.back_status === 'completed' &&
-                product.video_status !== 'pending' &&
                 product.video_status !== 'updating';
 
             if (product.status === 'running' && is_workflow_done) {

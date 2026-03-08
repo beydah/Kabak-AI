@@ -1,4 +1,3 @@
-﻿
 import { F_Track_Usage } from '../utils/storage_utils';
 
 export type ModelTask = 'text' | 'image' | 'video';
@@ -9,25 +8,36 @@ export interface AIModel {
     isFallback: boolean;
 }
 
-// HARD-CODED SINGLE SOURCE OF TRUTH
-export const PRIMARY_MODEL = 'gemini-2.0-flash';
+const PRIMARY_MODELS: Record<ModelTask, string> = {
+    text: 'gemini-2.5-flash',
+    image: 'models/gemini-3-pro-image-preview',
+    video: 'veo-3.1-generate-preview'
+};
 
-export const TEXT_MODELS: AIModel[] = [{ name: PRIMARY_MODEL, type: 'text', isFallback: false }];
-export const VISUAL_MODELS: AIModel[] = [{ name: PRIMARY_MODEL, type: 'image', isFallback: false }];
-export const VIDEO_MODELS: AIModel[] = [];
+export const PRIMARY_MODEL = PRIMARY_MODELS.text;
+
+export const TEXT_MODELS: AIModel[] = [{ name: PRIMARY_MODELS.text, type: 'text', isFallback: false }];
+export const VISUAL_MODELS: AIModel[] = [{ name: PRIMARY_MODELS.image, type: 'image', isFallback: false }];
+export const VIDEO_MODELS: AIModel[] = [{ name: PRIMARY_MODELS.video, type: 'video', isFallback: false }];
+
+const DEBUG_AI_LOGS = ((import.meta as any).env?.VITE_DEBUG_AI_LOGS === 'true');
+const F_Debug_Log = (...args: any[]) => {
+    if (DEBUG_AI_LOGS) console.log(...args);
+};
 
 const COST_MAP: Record<string, number> = {
     'gemini-2.0-flash': 0.0001,
     'gemini-2.5-flash': 0.0001,
-    'gemini-1.5-pro': 0.001,
-    'models/gemini-3-pro-image-preview': 0.002, // Estimated
-    'veo-3.0-generate-001': 0.05
+    'models/gemini-3-pro-image-preview': 0.002,
+    'veo-3.1-generate-preview': 0.05,
+    'veo-3.0-generate-001': 0.05,
+    'imagen-4.0-fast': 0.04
 };
 
 export class ModelService {
     private static instance: ModelService;
 
-    private constructor() { }
+    private constructor() {}
 
     public static getInstance(): ModelService {
         if (!ModelService.instance) {
@@ -39,36 +49,20 @@ export class ModelService {
     public async executeWithFailover<T>(
         task: ModelTask,
         operation: (model: AIModel) => Promise<T>,
-        modelName?: string // New optional parameter for accurate tracking
+        modelName?: string
     ): Promise<T> {
-        const model: AIModel = { name: modelName || PRIMARY_MODEL, type: task, isFallback: false };
+        const resolved_model_name = modelName || PRIMARY_MODELS[task];
+        const model: AIModel = { name: resolved_model_name, type: task, isFallback: false };
 
         try {
-            console.log(`[ModelService] Executing ${task} (Model: ${model.name})`);
+            F_Debug_Log(`[ModelService] Executing ${task} (Model: ${model.name})`);
             const result = await operation(model);
 
-            // ACCURATE TRACKING
-            // Use the passed modelName if available, otherwise default logic
-            let trackedModel = modelName;
-
-            if (!trackedModel) {
-                // Fallback Logic (Legacy)
-                trackedModel = 'gemini-2.5-flash';
-                if (task === 'image') trackedModel = 'models/gemini-3-pro-image-preview';
-            }
-
-            // Track usage with specific model name and its cost
-            F_Track_Usage(trackedModel, COST_MAP[trackedModel] || 0.0001).catch(console.error);
-
+            F_Track_Usage(resolved_model_name, COST_MAP[resolved_model_name] || 0.0001).catch(console.error);
             return result;
         } catch (error: any) {
-            console.error(`[ModelService] Failed:`, error);
+            console.error('[ModelService] Failed:', error);
             throw error;
         }
     }
-
-    private getModelsForTask(task: ModelTask): AIModel[] {
-        return [{ name: PRIMARY_MODEL, type: task, isFallback: false }];
-    }
 }
-

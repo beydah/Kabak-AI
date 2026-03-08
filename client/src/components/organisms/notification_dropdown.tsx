@@ -38,13 +38,12 @@ export const F_Notification_Dropdown: React.FC = () => {
                 onClick={() => set_show_notifications(!show_notifications)}
                 className="p-2 hover:bg-secondary/10 rounded-full transition-colors relative"
             >
-                <Bell size={24} className={error_logs.length > 0 ? "text-primary" : "text-secondary"} />
+                <Bell size={24} className={error_logs.length > 0 ? 'text-primary' : 'text-secondary'} />
                 {error_logs.length > 0 && (
                     <span className="absolute top-1 right-1 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-white dark:border-bg-dark" />
                 )}
             </button>
 
-            {/* Notification Popover */}
             {show_notifications && (
                 <div className="absolute right-0 top-full mt-2 w-80 md:w-96 bg-white dark:bg-bg-dark border border-secondary/20 rounded-xl shadow-xl z-[1000] overflow-hidden animate-in fade-in slide-in-from-top-2">
                     <div className="p-3 border-b border-secondary/20 flex items-center justify-between bg-secondary/5">
@@ -53,7 +52,7 @@ export const F_Notification_Dropdown: React.FC = () => {
                             <div className="flex gap-2">
                                 <button
                                     onClick={() => F_Copy_To_Clipboard(JSON.stringify(error_logs, null, 2))}
-                                    className={`text-xs hover:underline ${is_copied ? "text-green-500 font-bold" : "text-primary"}`}
+                                    className={`text-xs hover:underline ${is_copied ? 'text-green-500 font-bold' : 'text-primary'}`}
                                     disabled={is_copied}
                                 >
                                     {is_copied ? F_Get_Text('notifications.copied') : F_Get_Text('notifications.copy_all')}
@@ -73,7 +72,7 @@ export const F_Notification_Dropdown: React.FC = () => {
                                 {F_Get_Text('notifications.empty')}
                             </div>
                         ) : (
-                            error_logs.map(log => (
+                            error_logs.map((log) => (
                                 <div key={log.id} className="p-3 border-b border-secondary/10 hover:bg-secondary/5 transition-colors flex gap-3 text-left">
                                     <AlertCircle size={16} className="text-red-500 shrink-0 mt-0.5" />
                                     <div className="flex-1 min-w-0">
@@ -91,14 +90,14 @@ export const F_Notification_Dropdown: React.FC = () => {
                                         <button
                                             onClick={() => F_Copy_To_Clipboard(log.message)}
                                             className="p-1 hover:bg-secondary/10 rounded text-secondary hover:text-primary"
-                                            title="Copy"
+                                            title={F_Get_Text('notifications.copy')}
                                         >
                                             <Copy size={12} />
                                         </button>
                                         <button
                                             onClick={() => remove_log(log.id)}
                                             className="p-1 hover:bg-secondary/10 rounded text-secondary hover:text-red-500"
-                                            title="Delete"
+                                            title={F_Get_Text('notifications.delete')}
                                         >
                                             <Trash2 size={12} />
                                         </button>
@@ -109,7 +108,6 @@ export const F_Notification_Dropdown: React.FC = () => {
                     </div>
                 </div>
             )}
-
         </div>
     );
 };

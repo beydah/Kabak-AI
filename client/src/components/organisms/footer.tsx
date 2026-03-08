@@ -1,5 +1,4 @@
 import React from 'react';
-import { F_Text } from '../atoms/text';
 import { F_Get_Text } from '../../utils/i18n_utils';
 
 export const F_Footer: React.FC = () => {
@@ -11,10 +10,16 @@ export const F_Footer: React.FC = () => {
                         <p className="text-sm opacity-80">
                             {F_Get_Text('footer.copyright')}
                         </p>
-                        <p className="text-xs opacity-60 mt-1 flex gap-1">
-                            {F_Get_Text('footer.creator').split('Beydah Sağlam')[0]}
-                            <a href="https://beydahsaglam.com" target="_blank" rel="noopener noreferrer" className="hover:text-primary transition-colors">Beydah Sağlam</a>
-                            {F_Get_Text('footer.creator').split('Beydah Sağlam')[1]}
+                        <p className="text-xs opacity-60 mt-1 flex gap-1 items-center justify-center md:justify-start">
+                            <span>{F_Get_Text('footer.creator_prefix')}</span>
+                            <a
+                                href="https://beydahsaglam.com"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="hover:text-primary transition-colors"
+                            >
+                                {F_Get_Text('footer.creator_name')}
+                            </a>
                         </p>
                     </div>
                     <p className="text-sm opacity-80">
