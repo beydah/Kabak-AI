@@ -1,5 +1,4 @@
-import React from 'react';
-import { useNavigate } from 'react-router-dom';
+﻿import React from 'react';
 import { F_Header } from '../../components/organisms/header';
 import { F_Footer } from '../../components/organisms/footer';
 import { F_Hero_Section } from '../../components/organisms/hero_section';
@@ -8,14 +7,8 @@ import { F_About_Section } from '../../components/organisms/about_section';
 import { F_AI_Models_Section } from '../../components/organisms/ai_models_section';
 import { F_Open_Source_Section } from '../../components/organisms/open_source_section';
 import { F_Contact_Section } from '../../components/organisms/contact_section';
-import { F_Init_Theme } from '../../utils/theme_utils';
-
-// Initialize theme
-F_Init_Theme();
 
 export const F_Home_Page: React.FC = () => {
-    const navigate = useNavigate();
-
     const F_Handle_Get_Started = () => {
         window.open('https://beydahsaglam.com', '_blank');
     };

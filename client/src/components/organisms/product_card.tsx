@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+﻿import React, { useState } from 'react';
 import { RotateCcw, Trash2, ChevronLeft, ChevronRight, AlertCircle, XCircle } from 'lucide-react';
 import { I_Product_Data, F_Update_Product_Status, F_Delete_Product_By_Id } from '../../utils/storage_utils';
 import { useJobManager } from '../../context/JobContext';
@@ -17,7 +17,7 @@ export const F_Product_Card: React.FC<Product_Card_Props> = ({ p_product, p_navi
     // We only need front/back if we treat "Model" as the new "Front"
     const [current_view, set_current_view] = useState<'front' | 'back'>('front');
     const [show_delete_confirm, set_show_delete_confirm] = useState(false);
-    const { remove_log, cancel_job } = useJobManager();
+    const { cancel_job } = useJobManager();
 
     const has_back_image = !!p_product.raw_back;
     const is_running = p_product.status === 'running';
@@ -261,3 +261,4 @@ export const F_Product_Card: React.FC<Product_Card_Props> = ({ p_product, p_navi
         </>
     );
 };
+

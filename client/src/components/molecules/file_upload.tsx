@@ -1,6 +1,5 @@
-import React, { useState, useRef, useEffect } from 'react';
+﻿import React, { useState, useRef, useEffect } from 'react';
 import { F_Validate_Image_File } from '../../utils/file_utils';
-import { F_Text } from '../atoms/text';
 import { F_Get_Text } from '../../utils/i18n_utils';
 
 interface File_Upload_Props {
@@ -11,13 +10,11 @@ interface File_Upload_Props {
     p_preview_url?: string;
 }
 
-// Memoize removed to fix "Component is not a function" crash if caused by object return
 export const F_File_Upload: React.FC<File_Upload_Props> = ({ p_label, p_id, p_file, p_on_change, p_preview_url }) => {
     const [is_dragging, set_is_dragging] = useState(false);
     const [preview, set_preview] = useState<string | undefined>(p_preview_url);
     const input_ref = useRef<HTMLInputElement>(null);
 
-    // Handle File -> URL conversion and cleanup
     useEffect(() => {
         let object_url: string | undefined;
 
@@ -49,14 +46,17 @@ export const F_File_Upload: React.FC<File_Upload_Props> = ({ p_label, p_id, p_fi
         e.preventDefault();
         set_is_dragging(false);
 
-        if (e.dataTransfer.files && e.dataTransfer.files[0]) {
-            const dropped_file = e.dataTransfer.files[0];
-            if (F_Validate_Image_File(dropped_file) || dropped_file.type === 'image/svg+xml') {
-                p_on_change(dropped_file);
-            } else {
-                alert(F_Get_Text('new_product.upload.error_type'));
-            }
+        if (!e.dataTransfer.files || !e.dataTransfer.files[0]) {
+            return;
         }
+
+        const dropped_file = e.dataTransfer.files[0];
+        if (F_Validate_Image_File(dropped_file) || dropped_file.type === 'image/svg+xml') {
+            p_on_change(dropped_file);
+            return;
+        }
+
+        alert(F_Get_Text('new_product.upload.error_type'));
     };
 
     const F_Handle_Click = () => {
@@ -64,14 +64,17 @@ export const F_File_Upload: React.FC<File_Upload_Props> = ({ p_label, p_id, p_fi
     };
 
     const F_Handle_Input_Change = (e: React.ChangeEvent<HTMLInputElement>) => {
-        if (e.target.files && e.target.files[0]) {
-            const selected_file = e.target.files[0];
-            if (F_Validate_Image_File(selected_file)) {
-                p_on_change(selected_file);
-            } else {
-                alert("Invalid file type.");
-            }
+        if (!e.target.files || !e.target.files[0]) {
+            return;
         }
+
+        const selected_file = e.target.files[0];
+        if (F_Validate_Image_File(selected_file) || selected_file.type === 'image/svg+xml') {
+            p_on_change(selected_file);
+            return;
+        }
+
+        alert(F_Get_Text('new_product.upload.error_type'));
     };
 
     return (
@@ -95,7 +98,7 @@ export const F_File_Upload: React.FC<File_Upload_Props> = ({ p_label, p_id, p_fi
                     type="file"
                     ref={input_ref}
                     className="hidden"
-                    accept=".jpg,.jpeg,.png,.webp,.tiff"
+                    accept=".jpg,.jpeg,.png,.webp,.tiff,.svg"
                     onChange={F_Handle_Input_Change}
                 />
 

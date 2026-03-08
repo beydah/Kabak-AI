@@ -1,8 +1,10 @@
-import express from 'express';
+﻿import express from 'express';
 import dotenv from 'dotenv';
 import path from 'path';
+import { fileURLToPath } from 'url';
 
-// Strict naming: server_entry.ts
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 dotenv.config({ path: path.join(__dirname, '../../.env') });
 
@@ -11,9 +13,12 @@ const PORT = process.env.PORT || 4000;
 
 app.use(express.json());
 
-// Example strict naming route handler
-app.get('/api/health', (p_req, p_res) => {
-    p_res.json({ status: 'ok', message: 'Server is running', timestamp: new Date().toISOString() });
+app.get('/api/health', (_req, res) => {
+    res.json({
+        status: 'ok',
+        message: 'Server is running',
+        timestamp: new Date().toISOString(),
+    });
 });
 
 app.listen(PORT, () => {

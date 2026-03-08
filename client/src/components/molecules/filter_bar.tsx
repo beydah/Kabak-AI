@@ -1,6 +1,5 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import { Search, Filter, X } from 'lucide-react';
-import { F_Text } from '../atoms/text';
 import { F_Get_Text } from '../../utils/i18n_utils';
 import { F_Combobox } from '../atoms/combobox';
 
@@ -157,3 +156,4 @@ export const F_Filter_Bar: React.FC<Filter_Bar_Props> = ({ p_on_filter_change })
         </div>
     );
 };
+

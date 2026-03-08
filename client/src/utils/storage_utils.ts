@@ -1,4 +1,4 @@
-import { DB_Service } from '../services/storage_service';
+﻿import { DB_Service } from '../services/storage_service';
 import { I_Product_Data, I_Error_Log, I_Metric, ProductStatus } from '../types/interfaces';
 
 export type { I_Product_Data, I_Error_Log, I_Metric }; // Re-export types
@@ -70,6 +70,7 @@ export const F_Update_Product_Status = async (
     p_title?: string,
     p_desc?: string,
     p_generated_image?: string,
+    p_generated_video?: string, // Added for video persistence
     p_seo_status?: 'pending' | 'updating' | 'completed' | 'failed',
     p_front_status?: 'pending' | 'updating' | 'completed' | 'failed',
     p_back_status?: 'pending' | 'updating' | 'completed' | 'failed',
@@ -87,6 +88,7 @@ export const F_Update_Product_Status = async (
             if (p_title) product.product_title = p_title;
             if (p_desc) product.product_desc = p_desc;
             if (p_generated_image) product.model_front = p_generated_image;
+            if (p_generated_video) product.model_video = p_generated_video; // Save video
 
             // Update Granular Statuses if provided
             if (p_seo_status) product.seo_status = p_seo_status;
@@ -171,14 +173,7 @@ export const F_Get_Draft_Image = async (key: string): Promise<string | null> => 
 };
 
 export const F_Remove_Draft_Image = async (key: string) => {
-    // We don't have delete single draft in DB_Service yet, only clearDrafts?
-    // I added saveDraft, getDraft, clearDrafts. 
-    // I should probably have add deleteDraft(key).
-    // For now, saving null effectively "deletes" or I can add delete method to IDB service later.
-    // Let's explicitly save null or modify service.
-    // Actually, let's just use saveDraft(key, null) to "clear" it if UI handles null?
-    // Or better, update DB_Service to have delete.
-    await DB_Service.saveDraft(key, null);
+    await DB_Service.deleteDraft(key);
 };
 
 // SETTINGS / DEFAULTS OPERATIONS (ASYNC - IndexedDB)
@@ -250,7 +245,7 @@ export const F_Track_Usage = async (model_id: string, cost: number) => {
     metric.last_updated = Date.now();
 
     // Update history for today
-    const historyIndex = metric.usage_history.findIndex((h: any) => h.date === today);
+    const historyIndex = metric.usage_history.findIndex((h) => h.date === today);
     if (historyIndex >= 0) {
         metric.usage_history[historyIndex].count += 1;
         metric.usage_history[historyIndex].cost += cost;
@@ -307,3 +302,4 @@ export const F_Clear_All_Stats = async () => {
         console.error("[Storage] Failed to clear all stats:", e);
     }
 };
+

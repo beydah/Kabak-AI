@@ -1,20 +1,29 @@
 {
   "name": "kabak-ai",
   "version": "1.0.0",
-  "description": "Strict Architecture Full Stack App",
+  "description": "AI-powered fashion visualization platform",
   "type": "module",
   "main": "server/src/server_entry.ts",
   "scripts": {
+    "dev": "npm run dev:client",
     "client": "npm run dev:client",
     "dev:client": "vite serve client --config client/vite.config.ts",
     "build:client": "vite build client --config client/vite.config.ts",
+    "preview:client": "vite preview client --config client/vite.config.ts",
     "dev:server": "ts-node server/src/server_entry.ts",
-    "start": "npm run dev:server"
+    "start": "npm run dev:server",
+    "typecheck": "tsc --noEmit -p tsconfig.client.json && tsc --noEmit -p tsconfig.server.json",
+    "build": "npm run build:client",
+    "check": "npm run typecheck && npm run build:client"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
+  "engines": {
+    "node": ">=18.0.0"
+  },
   "dependencies": {
+    "@google/genai": "^1.41.0",
     "@google/generative-ai": "^0.24.1",
     "@types/uuid": "^10.0.0",
     "dotenv": "^16.3.1",

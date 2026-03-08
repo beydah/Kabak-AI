@@ -1,22 +1,31 @@
-# Contributing to Kabak-AI 🚀
+﻿# Contributing
 
-First off, thank you for considering contributing to **Kabak-AI**!  
-Your support helps improve the project and pushes the future of AI-powered product photography forward.
+Thanks for contributing to Kabak AI.
 
-We welcome contributions from developers of all experience levels.
+## Development Setup
+1. Install dependencies: `npm install`
+2. Configure env: `cp .env.example .env`
+3. Start client: `npm run dev`
+4. Run checks: `npm run check`
 
----
+## Branch and Commit Guidelines
+- Create short, focused branches.
+- Prefer one concern per pull request.
+- Use clear commit messages in imperative mood.
+  - Example: `fix: prevent duplicate job execution`
 
-## 📌 Ways to Contribute
+## Pull Request Rules
+- Keep PRs reviewable and scoped.
+- Include reproduction steps for bug fixes.
+- Include screenshots for UI changes.
+- Update docs when behavior changes.
 
-You can support Kabak-AI in several ways:
+## Code Quality
+Before opening a PR:
+- Run `npm run typecheck`
+- Run `npm run build`
+- Ensure no secret values are committed
 
-- 🐛 Reporting bugs  
-- 💡 Suggesting new features  
-- 📖 Improving documentation  
-- 🧠 Sharing ideas and feedback  
-- 🔧 Submitting code improvements  
-- 🧪 Writing tests  
-- 🎨 Enhancing UI/UX  
-
----
+## Security
+Do not open public issues for vulnerabilities.
+Use `SECURITY.md` for private reporting guidance.

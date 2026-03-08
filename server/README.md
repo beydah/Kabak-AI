@@ -1,13 +1,17 @@
-# Server Architecture
+﻿# Server Module
 
-This backend is built with **Node.js**. It follows a strict separation of concerns (Controller-Service-Model).
+Backend module for API endpoints and runtime checks.
 
-## Directory Structure
+## Current Scope
+- Express server entry (`server_entry.ts`)
+- Health endpoint (`/api/health`)
+- Auth controller skeleton
 
-- **`config/`**: Configuration files (Environment variables loader, DB connection setup).
-- **`controllers/`**: Handles incoming HTTP requests. validates inputs, calls the appropriate Service, and sends the response. **No business logic here.**
-- **`services/`**: logic layer. Contains all business rules and interacts with Models.
-- **`models/`**: Database schemas and data models.
-- **`middlewares/`**: Express middlewares for auth, logging, error handling.
-- **`routes/`**: Definitions of API endpoints.
-- **`utils/`**: Helper functions specific to the backend.
+## Recommended Growth Path
+- `routes/` for endpoint registration
+- `controllers/` for request handlers
+- `services/` for business logic
+- `middlewares/` for auth/error handling
+- `validators/` for schema validation
+
+Keep controllers small and testable; move logic into services.

@@ -1,4 +1,6 @@
 import { GoogleGenerativeAI } from '@google/generative-ai';
+// @ts-ignore
+import { GoogleGenAI } from "@google/genai";
 import { ProductInput, Accessory, BgOption, ApiLog, I_Product_Data } from '../types/interfaces';
 import { ModelService, AIModel } from './model_service';
 import { F_Build_Imagen_Prompt, F_Get_Negative_Prompt, F_Build_Structured_Prompt } from '../utils/prompt_utils';
@@ -31,7 +33,7 @@ export class GeminiService {
         return instance;
     }
 
-    // --- GÖREV 1 & 2: GÖRSEL ÜRETİM (Gemini 3 Pro Image Preview) ---
+    // --- GÃ–REV 1 & 2: GÃ–RSEL ÃœRETÄ°M (Gemini 3 Pro Image Preview) ---
     async generateProductOnModel(input: ProductInput): Promise<string> {
         return this.modelService.executeWithFailover('image', async () => {
             let attempt = 0;
@@ -55,7 +57,7 @@ export class GeminiService {
                 - Product Fit: ${input.productFit}
                 - Background: ${input.backgroundColor}
                 - Accessory: ${input.accessory}
-                - Composition: Full-body shot (boydan çekim).
+                - Composition: Full-body shot (boydan Ã§ekim).
                 - Aspect Ratio: Vertical 3:4 (Portrait).
                 
                 CRITICAL OUTFIT LOGIC:
@@ -188,7 +190,7 @@ export class GeminiService {
         }
     }
 
-    // --- GÖREV 3, 4 & 5: AKILLI SEO VE METİN ÜRETİMİ (REVISED) ---
+    // --- GÃ–REV 3, 4 & 5: AKILLI SEO VE METÄ°N ÃœRETÄ°MÄ° (REVISED) ---
     async generateSEOContent(input: ProductInput, lang: string = 'tr'): Promise<{ title: string; description: string }> {
         return this.modelService.executeWithFailover('text', async () => {
             const genModel = this.ai.getGenerativeModel({
@@ -200,9 +202,9 @@ export class GeminiService {
 
             // SMART EXTRACTION: Catch more patterns for Brand, Size, Defects
             const foundBrandMatch = rawDesc.match(/(Marka|Brand)\s*[:\-\s]?\s*([a-zA-Z0-9\s]+)/i);
-            const foundSizeMatch = rawDesc.match(/(Beden|Size|Ölçü)\s*[:\-\s]?\s*([a-zA-Z0-9\s/]+)/i);
-            const foundDefectMatch = rawDesc.match(/(defo|leke|yırtık|kusur|defect|stain|tear)/i);
-            const foundUsageMatch = rawDesc.match(/(yeni|etiketli|ikinci el|kullanılmış|used|new)/i);
+            const foundSizeMatch = rawDesc.match(/(Beden|Size|Ã–lÃ§Ã¼)\s*[:\-\s]?\s*([a-zA-Z0-9\s/]+)/i);
+            const foundDefectMatch = rawDesc.match(/(defo|leke|yÄ±rtÄ±k|kusur|defect|stain|tear)/i);
+            const foundUsageMatch = rawDesc.match(/(yeni|etiketli|ikinci el|kullanÄ±lmÄ±ÅŸ|used|new)/i);
 
             // Extract the actual values or use regex matches directly if simple
             const brandVal = foundBrandMatch ? foundBrandMatch[2].trim() : "";
@@ -221,7 +223,7 @@ export class GeminiService {
             1. Title:
                - Max 5 words.
                - MUST include Brand (${brandVal}) and Size (${sizeVal}) if present.
-               - Format: "[Brand] [Size] [Key Feature/Type]" (e.g., "Zara S Beden İpek Gömlek").
+               - Format: "[Brand] [Size] [Key Feature/Type]" (e.g., "Zara S Beden Ä°pek GÃ¶mlek").
             
             2. Description:
                - Length: ~500 characters.
@@ -238,7 +240,7 @@ export class GeminiService {
                - EMOJI RULE: Use exactly 5 emojis. Place them naturally BETWEEN sentences or clauses. NOT all at the end.
                - End with exactly 5 relevant hashtags.
             
-            OUTPUT LANGUAGE: ${lang === 'tr' ? 'Türkçe' : 'English'}
+            OUTPUT LANGUAGE: ${lang === 'tr' ? 'TÃ¼rkÃ§e' : 'English'}
             OUTPUT JSON: {"title": "...", "description": "..."}`;
 
             const result = await genModel.generateContent(prompt);
@@ -277,7 +279,7 @@ export class GeminiService {
                  - Image 2: The RAW BACK IMAGE (Reference for product details like cuts, labels, patterns).
                  
                  MANDATORY CONFIGURATION:
-                 - Composition: Full-body shot (boydan çekim), showing the mannequin from head to toe from the back.
+                 - Composition: Full-body shot (boydan Ã§ekim), showing the mannequin from head to toe from the back.
                  - Aspect Ratio: Vertical 3:4 (Portrait).
                  - Consistency: The mannequin, lighting, and background MUST MATCH the Front View exactly.
                  
@@ -339,12 +341,95 @@ export class GeminiService {
         }, 'models/gemini-3-pro-image-preview');
     }
 
-    // --- VIDEO (Stubbed) ---
+    // --- VIDEO (Veo 3.1 Preview) ---
     async generateVideo(input: ProductInput, imageBase64: string): Promise<string> {
-        return "";
-    }
+        console.log("[GeminiService] Generating Video with Veo 3.1 (New SDK)...");
 
-    // --- MULTIMODAL PIPELINE METHODS (Refactored) ---
+        // @ts-ignore
+        const ai = new GoogleGenAI({ apiKey: this.apiKey });
+
+        const cleanBase64 = imageBase64.includes(',') ? imageBase64.split(',')[1] : imageBase64;
+        if (!cleanBase64 || cleanBase64.length < 100) {
+            throw new Error("Input image is invalid or too short.");
+        }
+
+        console.log("[GeminiService] Video Generation Image Data Length:", cleanBase64.length);
+
+        const textPrompt = 'High-end fashion commercial featuring the model from the image. FRONT VIEW ONLY. The model should slowly move or pose while facing forward. Fabric texture showcase. Cinematic lighting. DO NOT SHOW THE BACK SIDE. Focus on the front design.';
+
+        try {
+            const productImage = {
+                imageBytes: cleanBase64,
+                mimeType: 'image/jpeg',
+            };
+
+            let operation = await ai.models.generateVideos({
+                model: 'veo-3.1-generate-preview',
+                // @ts-ignore
+                prompt: textPrompt,
+                // @ts-ignore
+                image: productImage,
+                config: {
+                    aspectRatio: '9:16',
+                },
+            });
+
+            console.log('Waiting for video generation to complete...');
+            while (operation.done !== true) {
+                await new Promise((resolve) => setTimeout(resolve, 10000));
+                // @ts-ignore
+                operation = await ai.operations.getVideosOperation({ operation });
+                console.log('Polling... Full Operation:', JSON.stringify(operation, null, 2));
+            }
+
+            // @ts-ignore
+            if (operation.response?.raiMediaFilteredReasons) {
+                // @ts-ignore
+                const reasons = operation.response.raiMediaFilteredReasons.join(', ');
+                throw new Error(`Video generation blocked by safety filters: ${reasons}`);
+            }
+
+            // @ts-ignore
+            const uri = operation.response?.generatedVideos?.[0]?.video?.uri || operation.result?.response?.generatedVideos?.[0]?.video?.uri;
+            if (!uri) {
+                throw new Error('Video generation completed but no URI was returned.');
+            }
+
+            console.log('[GeminiService] Fetching video blob from URI:', uri);
+            const fetchUrl = uri.includes('key=')
+                ? uri
+                : `${uri}${uri.includes('?') ? '&' : '?'}key=${this.apiKey}`;
+
+            const res = await fetch(fetchUrl, { method: 'GET' });
+            console.log('[GeminiService] Video Fetch Status:', res.status, res.statusText);
+
+            if (!res.ok) {
+                const errorText = await res.text();
+                console.error('Video Fetch Error Body:', errorText);
+
+                if (res.status === 403) {
+                    const activationUrlMatch = errorText.match(/https?:\/\/[^\s"']+/);
+                    if (activationUrlMatch) {
+                        throw new Error(`Generative Language API is disabled for this project. Enable it: ${activationUrlMatch[0]}`);
+                    }
+                    throw new Error('Video fetch was denied (403). Check API enablement, key restrictions, and billing.');
+                }
+
+                throw new Error(`Failed to fetch video blob: ${res.status} ${res.statusText}`);
+            }
+
+            const contentType = res.headers.get('content-type');
+            if (contentType && !contentType.startsWith('video/') && !contentType.startsWith('application/octet-stream')) {
+                console.warn(`Unexpected Content-Type: ${contentType}. Continuing anyway.`);
+            }
+
+            const blob = await res.blob();
+            return URL.createObjectURL(blob);
+        } catch (error) {
+            console.error('Veo 3.1 Failed:', error);
+            throw error;
+        }
+    }
 
     // Phase 2: Visual Analysis (Keep Flash)
     async analyzeImage(imageBase64: string, prompt: string): Promise<string> {
@@ -485,3 +570,4 @@ export const F_Generate_Back_View = async (p_product: I_Product_Data, front_view
     };
     return await service.generateBackView(input, front_view);
 };
+

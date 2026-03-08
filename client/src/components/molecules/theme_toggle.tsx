@@ -1,5 +1,4 @@
-import React from 'react';
-import { F_Button } from '../atoms/button';
+﻿import React from 'react';
 import { F_Icon } from '../atoms/icon';
 import { F_Transition_Theme, F_Get_Theme } from '../../utils/theme_utils';
 
@@ -39,3 +38,4 @@ export const F_Theme_Toggle: React.FC<Theme_Toggle_Props> = ({
         </button>
     );
 };
+

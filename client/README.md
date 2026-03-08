@@ -1,19 +1,17 @@
-# Client Architecture
+﻿# Client Module
 
-This frontend is built with **React**, **Vite**, and **Tailwind CSS**. It follows the **Atomic Design** method strictly.
+Frontend module built with React + Vite + Tailwind CSS.
 
-## Directory Structure
+## Main Folders
+- `src/components`: UI components (atoms, molecules, organisms, templates)
+- `src/pages`: route-level screens
+- `src/services`: AI and storage services
+- `src/utils`: utility functions
+- `src/routes`: router definition
+- `src/context`: React context providers
 
-### `src/components` (Atomic Design)
-- **`atoms/`**: The smallest building blocks. Examples: `Button`, `Input`, `Icon`. These components have no business logic and are purely presentational.
-- **`molecules/`**: Groups of atoms working together. Examples: `SearchBox` (Input + Button), `FormField` (Label + Input).
-- **`organisms/`**: Complex sections that form distinct parts of an interface. Examples: `Header`, `ProductCard`, `Footer`. They can handle some local state.
-- **`templates/`**: Page layouts that define the structure but don't hold data. Examples: `DashboardTemplate`, `AuthTemplate`.
-
-### Other Directories
-- **`pages/`**: The "Pages" layer. These connect data (from services/store) to Templates.
-- **`layouts/`**: high-level wrappers like `MainLayout` (which might include a specific Header and Footer).
-- **`services/`**: API calls and external services. **UI components must NEVER make API calls directly.**
-- **`store/`**: Global state management (e.g., Zustand, Redux context).
-- **`routes/`**: Routing configuration (React Router).
-- **`types/`**: Client-specific TypeScript interfaces.
+## Standards
+- Keep page components thin.
+- Move shared logic to `utils` or `services`.
+- Keep storage access centralized under `storage_utils` and `storage_service`.
+- Use typed interfaces from `src/types` and `shared/types`.

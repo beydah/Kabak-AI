@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+﻿import React, { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { v4 as uuidv4 } from 'uuid';
 import { F_Main_Template } from '../../components/templates/main_template';
@@ -54,7 +54,7 @@ export const F_New_Product_Page: React.FC = () => {
 
     const F_Handle_Submit = async (p_data: Partial<I_Product_Data>, p_front_file: File | null, p_back_file: File | null) => {
         if (!p_front_file && !p_data.raw_front) {
-            alert("Please upload a front photo.");
+            alert(F_Get_Text('new_product.validation.required_images'));
             return;
         }
 
@@ -89,7 +89,7 @@ export const F_New_Product_Page: React.FC = () => {
             // 1. Save Product
             await F_Save_Product(new_product);
 
-            // 2. Update Defaults in IndexedDB (User Request: "new-product bilgileri doldurulan ilgili kısımlarla güncellenecek")
+            // 2. Update Defaults in IndexedDB (User Request: "new-product bilgileri doldurulan ilgili kÄ±sÄ±mlarla gÃ¼ncellenecek")
             const new_defaults = {
                 gender: new_product.gender,
                 age: new_product.age,
@@ -109,7 +109,7 @@ export const F_New_Product_Page: React.FC = () => {
 
         } catch (error) {
             console.error("Error creating product:", error);
-            alert("Failed to create product. Please try again.");
+            alert(F_Get_Text('common.error'));
         }
     };
 
@@ -160,3 +160,5 @@ export const F_New_Product_Page: React.FC = () => {
         </F_Main_Template>
     );
 };
+
+

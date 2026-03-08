@@ -1,13 +1,11 @@
-import { createBrowserRouter } from 'react-router-dom';
+﻿import { createBrowserRouter } from 'react-router-dom';
 
-// Page imports
 import { F_Home_Page } from '../pages/home/home_page';
 import { F_Contact_Page } from '../pages/contact/contact_page';
 import { F_Login_Page } from '../pages/login/login_page';
 import { F_Collection_Page } from '../pages/collection/collection_page';
 import { F_New_Product_Page } from '../pages/new_product/new_product_page';
 import { F_Product_Page } from '../pages/product/product_page';
-// Settings removed
 import { F_Auth_Guard } from '../layout/auth_guard';
 
 export const app_router = createBrowserRouter([
@@ -47,14 +45,4 @@ export const app_router = createBrowserRouter([
             </F_Auth_Guard>
         ),
     },
-], {
-    // @ts-ignore
-    future: {
-        v7_startTransition: true,
-        v7_relativeSplatPath: true,
-        v7_fetcherPersist: true,
-        v7_normalizeFormMethod: true,
-        v7_partialHydration: true,
-        v7_skipActionErrorRevalidation: true,
-    },
-});
+]);

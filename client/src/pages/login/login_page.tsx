@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+﻿import React, { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { F_Auth_Template } from '../../components/templates/auth_template';
 import { F_Text } from '../../components/atoms/text';
@@ -18,15 +18,16 @@ export const F_Login_Page: React.FC = () => {
         const ban_timestamp = localStorage.getItem('login_ban_timestamp');
 
         if (ban_status === 'active' && ban_timestamp) {
-            const remaining_ms = parseInt(ban_timestamp) - Date.now();
+            const remaining_ms = parseInt(ban_timestamp, 10) - Date.now();
             if (remaining_ms > 0) {
                 set_lockout_timer(Math.ceil(remaining_ms / 1000));
                 set_error_message(F_Get_Text('login.account_locked'));
                 return true;
-            } else {
-                F_Clear_Ban();
             }
+
+            F_Clear_Ban();
         }
+
         return false;
     };
 
@@ -39,87 +40,68 @@ export const F_Login_Page: React.FC = () => {
     };
 
     useEffect(() => {
-        // Check for auth cookie
-        const auth_token = document.cookie.split('; ').find(row => row.startsWith('auth_token='));
+        const auth_token = document.cookie.split('; ').find((row) => row.startsWith('auth_token='));
         if (auth_token) {
             navigate('/collection');
         }
 
-        // Check ban status on load
         F_Check_Ban_Status();
-
     }, [navigate]);
 
-    // Timer Countdown
     useEffect(() => {
-        if (lockout_timer > 0) {
-            const timer = setInterval(() => {
-                set_lockout_timer(prev => {
-                    if (prev <= 1) {
-                        F_Clear_Ban();
-                        return 0;
-                    }
-                    return prev - 1;
-                });
-            }, 1000);
-            return () => clearInterval(timer);
+        if (lockout_timer <= 0) {
+            return;
         }
+
+        const timer = setInterval(() => {
+            set_lockout_timer((prev) => {
+                if (prev <= 1) {
+                    F_Clear_Ban();
+                    return 0;
+                }
+                return prev - 1;
+            });
+        }, 1000);
+
+        return () => clearInterval(timer);
     }, [lockout_timer]);
 
     const F_Handle_Login = () => {
         if (lockout_timer > 0) return;
-
-        // Re-check ban status before attempting (in case of tampering)
         if (F_Check_Ban_Status()) return;
 
         const env_username = (import.meta.env.VITE_USERNAME || '').trim();
         const env_password = (import.meta.env.VITE_PASSWORD || '').trim();
-
         const input_username = username.trim();
         const input_password = password.trim();
 
-        // TEMPORARY DEBUG LOGGING (Compare sanitized values)
-        console.log('[Auth Debug]', {
-            status: 'Checking credentials',
-            match_user: input_username === env_username,
-            match_pass: input_password === env_password,
-            env_user_len: env_username.length,
-            env_pass_len: env_password.length,
-            env_user_loaded: !!import.meta.env.VITE_USERNAME,
-            env_pass_loaded: !!import.meta.env.VITE_PASSWORD
-        });
-
         if (!env_username || !env_password) {
-            set_error_message("System Error: Auth configuration missing. Check .env file.");
+            set_error_message('System Error: Auth configuration missing. Check .env file.');
             return;
         }
 
         if (input_username === env_username && input_password === env_password) {
-            // Success
             const date = new Date();
-            date.setTime(date.getTime() + (7 * 24 * 60 * 60 * 1000)); // 7 days
-            document.cookie = "auth_token=session_key; expires=" + date.toUTCString() + "; path=/";
+            date.setTime(date.getTime() + (7 * 24 * 60 * 60 * 1000));
+            document.cookie = `auth_token=session_key; expires=${date.toUTCString()}; path=/; SameSite=Lax`;
 
             F_Clear_Ban();
             navigate('/collection');
-        } else {
-            // Failure
-            set_error_message(F_Get_Text('login.invalid_credentials'));
+            return;
+        }
 
-            // Only increment attempts ON FAILURE
-            const current_attempts = parseInt(localStorage.getItem('login_attempts') || '0') + 1;
-            localStorage.setItem('login_attempts', current_attempts.toString());
+        set_error_message(F_Get_Text('login.invalid_credentials'));
 
-            console.log('[Auth Debug] Failed. Attempts:', current_attempts);
+        const current_attempts = parseInt(localStorage.getItem('login_attempts') || '0', 10) + 1;
+        localStorage.setItem('login_attempts', current_attempts.toString());
 
-            if (current_attempts >= 5) {
-                const ban_end_time = Date.now() + (5 * 60 * 1000); // 5 minutes from now
-                localStorage.setItem('login_ban_status', 'active');
-                localStorage.setItem('login_ban_timestamp', ban_end_time.toString());
+        if (current_attempts >= 5) {
+            const ban_end_time = Date.now() + (5 * 60 * 1000);
+            localStorage.setItem('login_ban_status', 'active');
+            localStorage.setItem('login_ban_timestamp', ban_end_time.toString());
 
-                set_lockout_timer(300);
-                set_error_message("Too many failed attempts. Access restricted for 5 minutes.");
-            }
+            set_lockout_timer(300);
+            set_error_message('Too many failed attempts. Access restricted for 5 minutes.');
         }
     };
 
@@ -132,8 +114,6 @@ export const F_Login_Page: React.FC = () => {
     return (
         <F_Auth_Template>
             <div className="flex flex-col gap-6 w-full max-w-sm relative">
-
-                {/* Back Link Header */}
                 <div className="absolute -top-16 left-0 w-full flex justify-start">
                     <button
                         onClick={() => navigate('/')}
@@ -162,14 +142,14 @@ export const F_Login_Page: React.FC = () => {
                 <div className="flex flex-col gap-4">
                     <F_Input
                         p_value={username}
-                        p_on_change={set_username} // Fixed: Direct state setter
+                        p_on_change={set_username}
                         p_placeholder={F_Get_Text('login.username_placeholder')}
                         p_type="text"
                         p_disabled={lockout_timer > 0}
                     />
                     <F_Input
                         p_value={password}
-                        p_on_change={set_password} // Fixed: Direct state setter
+                        p_on_change={set_password}
                         p_placeholder={F_Get_Text('login.password_placeholder')}
                         p_type="password"
                         p_disabled={lockout_timer > 0}
@@ -184,7 +164,6 @@ export const F_Login_Page: React.FC = () => {
                     p_disabled={lockout_timer > 0}
                 />
 
-                {/* Footer CTA */}
                 <div className="text-center text-sm text-secondary mt-2">
                     {F_Get_Text('login.contact_prompt')}{' '}
                     <a

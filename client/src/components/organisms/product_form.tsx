@@ -1,9 +1,8 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import { F_Button } from '../../components/atoms/button';
 import { F_File_Upload } from '../../components/molecules/file_upload';
 import { I_Product_Data, F_Save_Draft_Image, F_Get_Draft_Image, F_Remove_Draft_Image } from '../../utils/storage_utils';
 import { F_Get_Text } from '../../utils/i18n_utils';
-import { v4 as uuidv4 } from 'uuid';
 import { F_File_To_Base64 } from '../../utils/file_utils';
 
 const DRAFT_IMG_FRONT = 'kabak_draft_img_front';
@@ -24,70 +23,14 @@ export const F_Product_Form: React.FC<Product_Form_Props> = ({
     p_on_cancel,
     p_on_change,
     p_is_edit_mode = false,
-    p_submit_label
+    p_submit_label,
 }) => {
-    // State for files
     const [front_file, set_front_file] = useState<File | null>(null);
     const [back_file, set_back_file] = useState<File | null>(null);
 
-    // DRAFT IMAGE PRESISTENCE - Load on Mount
-    useEffect(() => {
-        const loadDraftImages = async () => {
-            try {
-                // Front Image
-                const frontB64 = await F_Get_Draft_Image(DRAFT_IMG_FRONT);
-                if (frontB64 && !p_initial_data?.raw_front) {
-                    const res = await fetch(frontB64);
-                    const blob = await res.blob();
-                    const file = new File([blob], "draft_front.png", { type: "image/png" });
-                    set_front_file(file);
-                }
-
-                // Back Image
-                const backB64 = await F_Get_Draft_Image(DRAFT_IMG_BACK);
-                if (backB64 && !p_initial_data?.raw_back) {
-                    const res = await fetch(backB64);
-                    const blob = await res.blob();
-                    const file = new File([blob], "draft_back.png", { type: "image/png" });
-                    set_back_file(file);
-                }
-            } catch (e) {
-                console.error("Failed to load draft images", e);
-            }
-        };
-        loadDraftImages();
-    }, [p_initial_data]); // Dep on p_initial_data to ensure we don't overwrite if initial data comes in late? Maybe [] is safer.
-
-    // PROXY SETTERS FOR DRAFT SAVING
-    const setFrontFileWithDraft = async (file: File | null) => {
-        set_front_file(file);
-        if (file) {
-            try {
-                const b64 = await F_File_To_Base64(file);
-                await F_Save_Draft_Image(DRAFT_IMG_FRONT, b64);
-            } catch (e) { console.error("Draft save failed", e); }
-        } else {
-            await F_Remove_Draft_Image(DRAFT_IMG_FRONT);
-        }
-    };
-
-    const setBackFileWithDraft = async (file: File | null) => {
-        set_back_file(file);
-        if (file) {
-            try {
-                const b64 = await F_File_To_Base64(file);
-                await F_Save_Draft_Image(DRAFT_IMG_BACK, b64);
-            } catch (e) { console.error("Draft save failed", e); }
-        } else {
-            await F_Remove_Draft_Image(DRAFT_IMG_BACK);
-        }
-    };
-
-
-    // State for form data
     const [form_data, set_form_data] = useState({
-        gender: p_initial_data?.gender === false ? 'male' : 'female', // Default female (true)
-        age: p_initial_data?.age || '30', // Age is string in new schema
+        gender: p_initial_data?.gender === false ? 'male' : 'female',
+        age: p_initial_data?.age || '30',
         body_type: p_initial_data?.vücut_tipi || 'average',
         fit: p_initial_data?.kesim || 'regular',
         background: p_initial_data?.background || 'orange',
@@ -96,70 +39,133 @@ export const F_Product_Form: React.FC<Product_Form_Props> = ({
     });
 
     useEffect(() => {
-        if (p_initial_data) {
-            set_form_data(prev => ({
-                ...prev,
-                gender: p_initial_data.gender === false ? 'male' : 'female',
-                body_type: p_initial_data.vücut_tipi || 'average',
-                fit: p_initial_data.kesim || 'regular',
-                background: p_initial_data.background || 'orange',
-                accessory: p_initial_data.aksesuar || 'none',
-                // Keep existing values if p_initial_data key is missing but we have defaults
-                age: p_initial_data.age || '30',
-                description: p_initial_data.raw_desc || ''
-            }));
-        }
+        if (!p_initial_data) return;
+
+        set_form_data((prev) => ({
+            ...prev,
+            gender: p_initial_data.gender === false ? 'male' : 'female',
+            body_type: p_initial_data.vücut_tipi || 'average',
+            fit: p_initial_data.kesim || 'regular',
+            background: p_initial_data.background || 'orange',
+            accessory: p_initial_data.aksesuar || 'none',
+            age: p_initial_data.age || '30',
+            description: p_initial_data.raw_desc || '',
+        }));
     }, [p_initial_data]);
 
-    // Sync form_data changes to parent (for draft)
     useEffect(() => {
-        if (p_on_change) {
-            const partial_data: Partial<I_Product_Data> = {
-                gender: form_data.gender === 'female',
-                age: form_data.age,
-                vücut_tipi: form_data.body_type,
-                kesim: form_data.fit,
-                background: form_data.background,
-                aksesuar: form_data.accessory,
-                raw_desc: form_data.description
-            };
-            p_on_change(partial_data);
+        let mounted = true;
+
+        const loadDraftImages = async () => {
+            try {
+                const frontB64 = await F_Get_Draft_Image(DRAFT_IMG_FRONT);
+                if (mounted && frontB64 && !p_initial_data?.raw_front) {
+                    const res = await fetch(frontB64);
+                    const blob = await res.blob();
+                    set_front_file(new File([blob], 'draft_front.png', { type: 'image/png' }));
+                }
+
+                const backB64 = await F_Get_Draft_Image(DRAFT_IMG_BACK);
+                if (mounted && backB64 && !p_initial_data?.raw_back) {
+                    const res = await fetch(backB64);
+                    const blob = await res.blob();
+                    set_back_file(new File([blob], 'draft_back.png', { type: 'image/png' }));
+                }
+            } catch (e) {
+                console.error('Failed to load draft images', e);
+            }
+        };
+
+        loadDraftImages();
+
+        return () => {
+            mounted = false;
+        };
+    }, [p_initial_data]);
+
+    const setFrontFileWithDraft = async (file: File | null) => {
+        set_front_file(file);
+        if (file) {
+            try {
+                const b64 = await F_File_To_Base64(file);
+                await F_Save_Draft_Image(DRAFT_IMG_FRONT, b64);
+            } catch (e) {
+                console.error('Draft save failed', e);
+            }
+            return;
         }
+        await F_Remove_Draft_Image(DRAFT_IMG_FRONT);
+    };
+
+    const setBackFileWithDraft = async (file: File | null) => {
+        set_back_file(file);
+        if (file) {
+            try {
+                const b64 = await F_File_To_Base64(file);
+                await F_Save_Draft_Image(DRAFT_IMG_BACK, b64);
+            } catch (e) {
+                console.error('Draft save failed', e);
+            }
+            return;
+        }
+        await F_Remove_Draft_Image(DRAFT_IMG_BACK);
+    };
+
+    useEffect(() => {
+        if (!p_on_change) return;
+
+        const partial_data: Partial<I_Product_Data> = {
+            gender: form_data.gender === 'female',
+            age: form_data.age,
+            vücut_tipi: form_data.body_type,
+            kesim: form_data.fit,
+            background: form_data.background,
+            aksesuar: form_data.accessory,
+            raw_desc: form_data.description,
+        };
+
+        p_on_change(partial_data);
     }, [form_data, p_on_change]);
 
     const F_Handle_Change = (e: React.ChangeEvent<HTMLSelectElement | HTMLInputElement | HTMLTextAreaElement>) => {
         const { name, value } = e.target;
-        set_form_data(prev => ({ ...prev, [name]: value }));
+        set_form_data((prev) => ({ ...prev, [name]: value }));
+    };
+
+    const F_Validate_Form = (): boolean => {
+        if (!front_file && !p_initial_data?.raw_front) {
+            alert(F_Get_Text('new_product.validation.required_images'));
+            return false;
+        }
+
+        if (!back_file && !p_initial_data?.raw_back) {
+            alert(F_Get_Text('new_product.validation.required_images'));
+            return false;
+        }
+
+        if (!form_data.description.trim()) {
+            alert(F_Get_Text('new_product.validation.required_all'));
+            return false;
+        }
+
+        return true;
     };
 
     const F_Handle_Submit = async (e: React.FormEvent) => {
         e.preventDefault();
 
-        // Validation
-        if (!front_file && !p_initial_data?.raw_front) {
-            alert(F_Get_Text('validation.required_images'));
-            return;
-        }
-
-        if (!back_file && !p_initial_data?.raw_back) {
-            alert(F_Get_Text('validation.required_images'));
-            return;
-        }
-
-        if (!form_data.description.trim()) {
-            alert(F_Get_Text('validation.required_all'));
+        if (!F_Validate_Form()) {
             return;
         }
 
         const submit_data: Partial<I_Product_Data> = {
-            gender: form_data.gender === 'female', // true if female
+            gender: form_data.gender === 'female',
             age: form_data.age.toString(),
             vücut_tipi: form_data.body_type,
             kesim: form_data.fit,
             background: form_data.background,
             aksesuar: form_data.accessory,
             raw_desc: form_data.description,
-            // Images handled separately
         };
 
         await p_on_submit(submit_data, front_file, back_file);
@@ -167,10 +173,7 @@ export const F_Product_Form: React.FC<Product_Form_Props> = ({
 
     return (
         <form onSubmit={F_Handle_Submit} className="space-y-6 max-w-[600px] mx-auto">
-
-            {/* IMAGES: STRICT SIDE-BY-SIDE ON ALL SCREENS */}
             <div className="grid grid-cols-2 gap-4 mb-6">
-                {/* Front Photo */}
                 <div className="space-y-2">
                     <label htmlFor="product_front_image" className="block text-sm font-medium text-secondary ml-1">
                         {F_Get_Text('new_product.upload.front')} <span className="text-primary">*</span>
@@ -178,7 +181,7 @@ export const F_Product_Form: React.FC<Product_Form_Props> = ({
                     <div className="h-48">
                         <F_File_Upload
                             p_id="product_front_image"
-                            p_label="" // Handled by outer label
+                            p_label=""
                             p_file={front_file}
                             p_on_change={setFrontFileWithDraft}
                             p_preview_url={p_initial_data?.raw_front}
@@ -186,7 +189,6 @@ export const F_Product_Form: React.FC<Product_Form_Props> = ({
                     </div>
                 </div>
 
-                {/* Back Photo */}
                 <div className="space-y-2">
                     <label htmlFor="product_back_image" className="block text-sm font-medium text-secondary ml-1">
                         {F_Get_Text('new_product.upload.back')} <span className="text-primary">*</span>
@@ -205,9 +207,7 @@ export const F_Product_Form: React.FC<Product_Form_Props> = ({
 
             <hr className="border-secondary/20" />
 
-            {/* FORM GRID: More Compact */}
             <div className="grid grid-cols-2 gap-4">
-                {/* Left Col */}
                 <div className="space-y-4">
                     <div className="space-y-1">
                         <label htmlFor="gender" className="text-xs font-semibold text-secondary uppercase tracking-wider">
@@ -265,7 +265,6 @@ export const F_Product_Form: React.FC<Product_Form_Props> = ({
                     </div>
                 </div>
 
-                {/* Right Col */}
                 <div className="space-y-4">
                     <div className="space-y-1">
                         <label htmlFor="age" className="text-xs font-semibold text-secondary uppercase tracking-wider">
@@ -324,7 +323,6 @@ export const F_Product_Form: React.FC<Product_Form_Props> = ({
                 </div>
             </div>
 
-            {/* Description */}
             <div className="space-y-1">
                 <label htmlFor="description" className="text-xs font-semibold text-secondary uppercase tracking-wider">
                     {F_Get_Text('new_product.labels.description')}
@@ -342,7 +340,6 @@ export const F_Product_Form: React.FC<Product_Form_Props> = ({
                 />
             </div>
 
-            {/* Buttons */}
             <div className="flex items-center gap-3 pt-2">
                 {p_is_edit_mode && (
                     <F_Button
@@ -363,3 +360,4 @@ export const F_Product_Form: React.FC<Product_Form_Props> = ({
         </form>
     );
 };
+
