@@ -1,14 +1,24 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Edit2, Trash2, ChevronLeft, ChevronRight, Copy, Check, RotateCcw, Download, Video } from 'lucide-react';
 import { F_Main_Template } from '../../components/templates/main_template';
 import { F_Text } from '../../components/atoms/text';
 import { F_Button } from '../../components/atoms/button';
 import { F_Get_Text } from '../../utils/i18n_utils';
-import { F_Get_Product_By_Id, F_Delete_Product_By_Id, I_Product_Data } from '../../utils/storage_utils';
+import {
+    F_Get_Product_By_Id,
+    F_Delete_Product_By_Id,
+    I_Product_Data,
+    F_Save_Product,
+    F_Save_Product_Video_Asset,
+    F_Get_Product_Video_Asset,
+    F_Get_Product_Video_Link,
+    F_Delete_Product_Video_Asset
+} from '../../utils/storage_utils';
 import { F_Edit_Product_Modal } from '../../components/organisms/edit_product_modal';
 import { F_Confirmation_Modal } from '../../components/molecules/confirmation_modal';
-import { F_Generate_Video_Preview } from '../../services/gemini_service';
+import { F_Generate_Video_Preview, F_Analyze_Image } from '../../services/gemini_service';
+import { F_Download_Multiple_Files, I_Download_Item } from '../../utils/file_utils';
 
 export const F_Product_Page: React.FC = () => {
     const { id } = useParams<{ id: string }>();
@@ -16,40 +26,72 @@ export const F_Product_Page: React.FC = () => {
     const [product, set_product] = useState<I_Product_Data | undefined>(undefined);
     const [video_url, set_video_url] = useState<string | null>(null);
     const [is_generating_video, set_is_generating_video] = useState(false);
+    const [is_retrying, set_is_retrying] = useState(false);
     const [copied_field, set_copied_field] = useState<string | null>(null);
 
-    // State for image switcher
     const [active_image, set_active_image] = useState<'model_front' | 'model_back' | 'video'>('model_front');
 
-    // Modals
     const [is_edit_modal_open, set_is_edit_modal_open] = useState(false);
     const [is_delete_modal_open, set_is_delete_modal_open] = useState(false);
+
+    const latest_blob_video_ref = useRef<string | null>(null);
+
+    const F_Set_Video_URL = (p_next: string | null) => {
+        const previous = latest_blob_video_ref.current;
+        if (previous && previous !== p_next) {
+            URL.revokeObjectURL(previous);
+            latest_blob_video_ref.current = null;
+        }
+
+        if (p_next && p_next.startsWith('blob:')) {
+            latest_blob_video_ref.current = p_next;
+        }
+
+        set_video_url(p_next);
+    };
 
     useEffect(() => {
         F_Load_Product();
     }, [id]);
 
-    // Cleanup Blob URL to prevent memory leaks
     useEffect(() => {
         return () => {
-            if (video_url && video_url.startsWith('blob:')) {
-                URL.revokeObjectURL(video_url);
+            if (latest_blob_video_ref.current) {
+                URL.revokeObjectURL(latest_blob_video_ref.current);
+                latest_blob_video_ref.current = null;
             }
         };
-    }, [video_url]);
+    }, []);
+
+    const F_Load_Persisted_Video = async (p_product: I_Product_Data): Promise<string | null> => {
+        const video_asset = await F_Get_Product_Video_Asset(p_product.product_id);
+        if (video_asset?.video_blob) {
+            const local_url = URL.createObjectURL(video_asset.video_blob);
+            F_Set_Video_URL(local_url);
+            return local_url;
+        }
+
+        const stored_link = await F_Get_Product_Video_Link(p_product.product_id);
+        const fallback_link = stored_link || p_product.model_video || null;
+        F_Set_Video_URL(fallback_link);
+        return fallback_link;
+    };
 
     const F_Load_Product = async () => {
-        if (id) {
-            const data = await F_Get_Product_By_Id(id);
-            if (data) {
-                set_product(data);
-                if (data.model_video) set_video_url(data.model_video);
+        if (!id) return;
 
-                // Priority: Model Front > Video
-                if (data.model_front && !data.model_video) set_active_image('model_front');
-                else if (data.model_video) set_active_image('video'); // Auto-switch to video if exists
-                else set_active_image('model_front'); // Default
-            }
+        const data = await F_Get_Product_By_Id(id);
+        if (!data) return;
+
+        set_product(data);
+        const resolved_video = await F_Load_Persisted_Video(data);
+
+        if (data.model_front && !resolved_video) {
+            set_active_image('model_front');
+        } else if (resolved_video) {
+            set_active_image('video');
+        } else {
+            set_active_image('model_front');
         }
     };
 
@@ -57,7 +99,7 @@ export const F_Product_Page: React.FC = () => {
         const order: ('model_front' | 'model_back' | 'video')[] = [];
         if (product?.model_front) order.push('model_front');
         if (product?.model_back) order.push('model_back');
-        order.push('video'); // Always add video slide
+        order.push('video');
         return order;
     };
 
@@ -79,24 +121,45 @@ export const F_Product_Page: React.FC = () => {
         set_active_image(order[prev_index]);
     };
 
-    const F_Handle_Download = () => {
+    const F_Handle_Download = async () => {
         if (!product) return;
-        const link = document.createElement('a');
 
-        const downloadImage = (url: string, name: string) => {
-            link.href = url;
-            link.download = name;
-            link.click();
-        };
+        const items: I_Download_Item[] = [];
 
-        // Context-Aware Download
-        if (active_image === 'model_front' && product.model_front) {
-            downloadImage(product.model_front, `model_front_${product.product_id}.jpg`);
-        } else if (active_image === 'model_back' && product.model_back) {
-            downloadImage(product.model_back, `model_back_${product.product_id}.jpg`);
-        } else if (active_image === 'video' && video_url) {
-            downloadImage(video_url, `video_${product.product_id}.mp4`);
+        if (product.model_front) {
+            items.push({
+                url: product.model_front,
+                file_name: `model_front_${product.product_id}.jpg`
+            });
         }
+
+        if (product.model_back) {
+            items.push({
+                url: product.model_back,
+                file_name: `model_back_${product.product_id}.jpg`
+            });
+        }
+
+        const video_asset = await F_Get_Product_Video_Asset(product.product_id);
+        if (video_asset?.video_blob) {
+            items.push({
+                blob: video_asset.video_blob,
+                file_name: `model_video_${product.product_id}.mp4`
+            });
+        } else if (video_url) {
+            items.push({
+                url: video_url,
+                file_name: `model_video_${product.product_id}.mp4`
+            });
+        } else if (product.model_video) {
+            items.push({
+                url: product.model_video,
+                file_name: `model_video_${product.product_id}.mp4`
+            });
+        }
+
+        if (items.length === 0) return;
+        await F_Download_Multiple_Files(items);
     };
 
     const F_Handle_Delete = async () => {
@@ -111,14 +174,30 @@ export const F_Product_Page: React.FC = () => {
 
         try {
             set_is_generating_video(true);
-            const videoUrl = await F_Generate_Video_Preview(product);
+            const video_result = await F_Generate_Video_Preview(product);
 
-            if (videoUrl) {
-                set_video_url(videoUrl);
-                set_active_image('video');
-            } else {
+            if (!video_result) {
                 alert('Video generation failed: no video URI returned.');
+                return;
             }
+
+            await F_Save_Product_Video_Asset(
+                product.product_id,
+                video_result.video_blob,
+                video_result.fetch_url || video_result.source_uri
+            );
+
+            const updated_product: I_Product_Data = {
+                ...product,
+                model_video: video_result.fetch_url || video_result.source_uri,
+                video_status: 'completed',
+                update_at: Date.now()
+            };
+
+            await F_Save_Product(updated_product);
+            set_product(updated_product);
+            F_Set_Video_URL(video_result.playback_url);
+            set_active_image('video');
         } catch (error) {
             console.error('Video Generation Error:', error);
             const message = error instanceof Error ? error.message : F_Get_Text('common.error');
@@ -126,6 +205,86 @@ export const F_Product_Page: React.FC = () => {
         } finally {
             set_is_generating_video(false);
         }
+    };
+
+    const F_Build_Analysis_Prompt = (p_target: 'model_front' | 'model_back') => {
+        if (p_target === 'model_front') {
+            return 'Analyze this generated FRONT model image for realism and fashion quality issues. Find anatomy, fabric, lighting, fit and artifact problems. Return concise Turkish bullet-style findings.';
+        }
+
+        return 'Analyze this generated BACK model image for realism and consistency issues. Find anatomy, alignment, garment-back details and artifact problems. Return concise Turkish bullet-style findings.';
+    };
+
+    const F_Handle_Image_Fix = async (p_target: 'model_front' | 'model_back') => {
+        if (!product || is_retrying) return;
+
+        try {
+            set_is_retrying(true);
+
+            const source_image = p_target === 'model_front'
+                ? (product.model_front || product.raw_front)
+                : (product.model_back || product.raw_back || product.raw_front);
+
+            let analysis_summary: string | undefined;
+            if (source_image) {
+                analysis_summary = await F_Analyze_Image(source_image, F_Build_Analysis_Prompt(p_target));
+            }
+
+            const updated_product: I_Product_Data = {
+                ...product,
+                status: 'running',
+                retry_count: 0,
+                error_log: analysis_summary
+                    ? `Retry analysis (${p_target === 'model_front' ? 'front' : 'back'}): ${analysis_summary.slice(0, 220)}`
+                    : undefined,
+                analysis_status: 'completed',
+                seo_status: 'completed',
+                update_at: Date.now()
+            };
+
+            if (p_target === 'model_front') {
+                updated_product.front_status = 'pending';
+                updated_product.back_status = 'pending';
+                updated_product.model_front = undefined;
+                updated_product.model_back = undefined;
+                if (analysis_summary) updated_product.front_analyse = analysis_summary;
+
+                const has_video = Boolean(product.model_video || video_url);
+                if (has_video) {
+                    updated_product.video_status = 'pending';
+                    updated_product.model_video = undefined;
+                    await F_Delete_Product_Video_Asset(product.product_id);
+                    F_Set_Video_URL(null);
+                } else {
+                    updated_product.video_status = 'completed';
+                }
+
+                set_active_image('model_front');
+            } else {
+                updated_product.back_status = 'pending';
+                updated_product.video_status = 'completed';
+                updated_product.model_back = undefined;
+                if (analysis_summary) updated_product.back_analyse = analysis_summary;
+                set_active_image('model_back');
+            }
+
+            await F_Save_Product(updated_product);
+            set_product(updated_product);
+        } catch (error) {
+            console.error('Retry/Fix Error:', error);
+            alert(F_Get_Text('common.error'));
+        } finally {
+            set_is_retrying(false);
+        }
+    };
+
+    const F_Handle_Main_Retry = async () => {
+        if (active_image === 'model_back') {
+            await F_Handle_Image_Fix('model_back');
+            return;
+        }
+
+        await F_Handle_Image_Fix('model_front');
     };
 
     const F_Copy_To_Clipboard = (text: string, field: string) => {
@@ -146,15 +305,14 @@ export const F_Product_Page: React.FC = () => {
 
     const has_multiple_images = F_Get_Image_Order().length > 1;
 
-    // Display Data
     const display_title = product.product_title || F_Get_Text('product.title');
     const display_desc = product.product_desc || product.raw_desc || 'No description provided.';
+    const body_type_value = (product as any)['v\u00fccut_tipi'] ?? (product as any)['v\u00c3\u00bccut_tipi'];
 
     return (
         <F_Main_Template p_is_authenticated={true}>
             <div className="container mx-auto px-4 py-8 max-w-6xl">
 
-                {/* Back Link */}
                 <button
                     onClick={() => navigate('/collection')}
                     className="text-primary hover:underline font-medium mb-6 flex items-center gap-2"
@@ -164,12 +322,9 @@ export const F_Product_Page: React.FC = () => {
 
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
 
-                    {/* LEFT COLUMN: Images */}
                     <div className="space-y-4">
-                        {/* Main Image Container */}
                         <div className="aspect-[3/4] bg-white dark:bg-bg-dark rounded-xl shadow-sm border border-secondary/20 overflow-hidden relative group">
 
-                            {/* RENDER ACTIVE MEDIA */}
                             {active_image === 'video' ? (
                                 <div className="w-full h-full relative flex items-center justify-center overflow-hidden bg-black">
                                     {video_url ? (
@@ -182,14 +337,7 @@ export const F_Product_Page: React.FC = () => {
                                         />
                                     ) : (
                                         <>
-                                            {/* Blurred Background (Front Image) */}
-                                            <div
-                                                className="absolute inset-0 bg-cover bg-center blur-md grayscale opacity-50 scale-110"
-                                                style={{ backgroundImage: `url(${product.model_front || product.raw_front})` }}
-                                            ></div>
-                                            <div className="absolute inset-0 bg-black/20"></div>
-
-                                            {/* Create Video Button */}
+                                            <div className="absolute inset-0 bg-black/30"></div>
                                             <button
                                                 className="relative z-10 flex flex-col items-center gap-4 group/btn transition-transform hover:scale-105 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
                                                 onClick={F_Handle_Generate_Video}
@@ -203,7 +351,7 @@ export const F_Product_Page: React.FC = () => {
                                                     )}
                                                 </div>
                                                 <div className="px-6 py-2 bg-black/40 backdrop-blur-md rounded-full border border-white/10 text-white font-bold text-sm tracking-wide shadow-lg uppercase">
-                                                    {is_generating_video ? "Generating..." : F_Get_Text('product.create_video')}
+                                                    {is_generating_video ? 'Generating...' : F_Get_Text('product.create_video')}
                                                 </div>
                                             </button>
                                         </>
@@ -211,25 +359,25 @@ export const F_Product_Page: React.FC = () => {
                                 </div>
                             ) : (
                                 <img
-                                    key={active_image} // Force re-render for animation
+                                    key={active_image}
                                     src={active_image === 'model_front' ? product.model_front : (product.model_back || '')}
                                     alt="Main View"
                                     className="w-full h-full object-cover animate-fade-in transition-all duration-500"
                                 />
                             )}
 
-                            {/* Top-Left Actions (Retry & Download) - Hide on Video */}
                             {active_image !== 'video' && (
                                 <div className="absolute top-4 left-4 flex gap-2 z-20">
                                     <button
-                                        onClick={(e) => { e.stopPropagation(); F_Load_Product(); }}
-                                        className="p-2 bg-black/40 hover:bg-black/60 backdrop-blur-sm text-white rounded-lg transition-colors"
+                                        onClick={(e) => { e.stopPropagation(); F_Handle_Main_Retry(); }}
+                                        disabled={is_retrying}
+                                        className="p-2 bg-black/40 hover:bg-black/60 backdrop-blur-sm text-white rounded-lg transition-colors disabled:opacity-50"
                                         title={F_Get_Text('common.retry')}
                                     >
                                         <RotateCcw size={18} />
                                     </button>
                                     <button
-                                        onClick={(e) => { e.stopPropagation(); F_Handle_Download(); }}
+                                        onClick={(e) => { e.stopPropagation(); void F_Handle_Download(); }}
                                         className="p-2 bg-black/40 hover:bg-black/60 backdrop-blur-sm text-white rounded-lg transition-colors"
                                         title={F_Get_Text('product.download')}
                                     >
@@ -238,7 +386,6 @@ export const F_Product_Page: React.FC = () => {
                                 </div>
                             )}
 
-                            {/* Navigation Arrows (Interactive Gallery) - ALWAYS VISIBLE & OPAQUE */}
                             {has_multiple_images && (
                                 <div className="absolute inset-x-0 top-1/2 -translate-y-1/2 flex items-center justify-between px-4 pointer-events-none z-30">
                                     <button
@@ -259,35 +406,51 @@ export const F_Product_Page: React.FC = () => {
                             )}
                         </div>
 
-                        {/* Thumbnails Row */}
                         <div className="flex gap-4 overflow-x-auto pb-2">
-                            {/* Model Front */}
                             {product.model_front && (
-                                <button
-                                    onClick={() => set_active_image('model_front')}
-                                    className={`flex-shrink-0 w-24 h-32 rounded-lg border-2 overflow-hidden transition-all relative ${active_image === 'model_front'
-                                        ? 'border-primary ring-2 ring-primary/20'
-                                        : 'border-transparent hover:border-secondary/30'
-                                        }`}
-                                >
-                                    <img src={product.model_front} alt="Model Front" className="w-full h-full object-cover" />
-                                </button>
+                                <div className="relative flex-shrink-0">
+                                    <button
+                                        onClick={() => set_active_image('model_front')}
+                                        className={`w-24 h-32 rounded-lg border-2 overflow-hidden transition-all relative ${active_image === 'model_front'
+                                            ? 'border-primary ring-2 ring-primary/20'
+                                            : 'border-transparent hover:border-secondary/30'
+                                            }`}
+                                    >
+                                        <img src={product.model_front} alt="Model Front" className="w-full h-full object-cover" />
+                                    </button>
+                                    <button
+                                        onClick={(e) => { e.stopPropagation(); void F_Handle_Image_Fix('model_front'); }}
+                                        disabled={is_retrying}
+                                        className="absolute top-1 right-1 p-1 rounded-md bg-black/60 text-white hover:bg-black/80 disabled:opacity-50"
+                                        title={F_Get_Text('common.retry')}
+                                    >
+                                        <RotateCcw size={14} />
+                                    </button>
+                                </div>
                             )}
 
-                            {/* Model Back */}
                             {product.model_back && (
-                                <button
-                                    onClick={() => set_active_image('model_back')}
-                                    className={`flex-shrink-0 w-24 h-32 rounded-lg border-2 overflow-hidden transition-all relative ${active_image === 'model_back'
-                                        ? 'border-primary ring-2 ring-primary/20'
-                                        : 'border-transparent hover:border-secondary/30'
-                                        }`}
-                                >
-                                    <img src={product.model_back} alt="Model Back" className="w-full h-full object-cover" />
-                                </button>
+                                <div className="relative flex-shrink-0">
+                                    <button
+                                        onClick={() => set_active_image('model_back')}
+                                        className={`w-24 h-32 rounded-lg border-2 overflow-hidden transition-all relative ${active_image === 'model_back'
+                                            ? 'border-primary ring-2 ring-primary/20'
+                                            : 'border-transparent hover:border-secondary/30'
+                                            }`}
+                                    >
+                                        <img src={product.model_back} alt="Model Back" className="w-full h-full object-cover" />
+                                    </button>
+                                    <button
+                                        onClick={(e) => { e.stopPropagation(); void F_Handle_Image_Fix('model_back'); }}
+                                        disabled={is_retrying}
+                                        className="absolute top-1 right-1 p-1 rounded-md bg-black/60 text-white hover:bg-black/80 disabled:opacity-50"
+                                        title={F_Get_Text('common.retry')}
+                                    >
+                                        <RotateCcw size={14} />
+                                    </button>
+                                </div>
                             )}
 
-                            {/* Video Placeholder Thumbnail */}
                             <button
                                 onClick={() => set_active_image('video')}
                                 className={`flex-shrink-0 w-24 h-32 rounded-lg border-2 overflow-hidden transition-all relative group flex items-center justify-center bg-gray-900 ${active_image === 'video'
@@ -295,19 +458,13 @@ export const F_Product_Page: React.FC = () => {
                                     : 'border-transparent hover:border-secondary/30'
                                     }`}
                             >
-                                <div
-                                    className="absolute inset-0 bg-cover bg-center opacity-50 blur-sm grayscale"
-                                    style={{ backgroundImage: `url(${product.model_front || product.raw_front})` }}
-                                ></div>
                                 <Video size={24} className="text-white relative z-10" />
                             </button>
                         </div>
                     </div>
 
-                    {/* RIGHT COLUMN: Details & Actions */}
                     <div className="space-y-8">
 
-                        {/* Title Section */}
                         <div className="border-b border-secondary/10 pb-6">
                             <div className="flex items-start justify-between gap-4">
                                 <F_Text p_variant="h1" p_class_name="mb-2 leading-tight">
@@ -324,7 +481,6 @@ export const F_Product_Page: React.FC = () => {
                             <p className="text-secondary text-sm mt-1">ID: {product.product_id}</p>
                         </div>
 
-                        {/* Description Section */}
                         <div>
                             <div className="flex items-center justify-between mb-2">
                                 <h3 className="text-lg font-semibold text-text-light dark:text-text-dark">
@@ -353,7 +509,6 @@ export const F_Product_Page: React.FC = () => {
                             </p>
                         </div>
 
-                        {/* Attributes Grid */}
                         <div className="grid grid-cols-2 gap-y-4 gap-x-8">
                             <div>
                                 <dt className="text-secondary text-sm">{F_Get_Text('new_product.labels.gender')}</dt>
@@ -368,7 +523,7 @@ export const F_Product_Page: React.FC = () => {
                             <div>
                                 <dt className="text-secondary text-sm">{F_Get_Text('new_product.labels.body_type')}</dt>
                                 <dd className="font-medium capitalize text-text-light dark:text-text-dark">
-                                    {product.vücut_tipi ? F_Get_Text(`new_product.options.body_type.${product.vücut_tipi}`) : product.vücut_tipi}
+                                    {body_type_value ? F_Get_Text(`new_product.options.body_type.${body_type_value}`) : body_type_value}
                                 </dd>
                             </div>
                             <div>
@@ -391,7 +546,6 @@ export const F_Product_Page: React.FC = () => {
                             </div>
                         </div>
 
-                        {/* Actions */}
                         <div className="flex items-center gap-4 pt-6 border-t border-secondary/10">
                             <div className="flex gap-2">
                                 <button
@@ -414,13 +568,12 @@ export const F_Product_Page: React.FC = () => {
                                 p_label={F_Get_Text('product.download')}
                                 p_variant="primary"
                                 p_class_name="flex-1 py-3 flex items-center justify-center gap-2"
-                                p_on_click={F_Handle_Download}
+                                p_on_click={() => { void F_Handle_Download(); }}
                             />
                         </div>
                     </div>
                 </div>
 
-                {/* MODALS */}
                 <F_Edit_Product_Modal
                     p_is_open={is_edit_modal_open}
                     p_on_close={() => set_is_edit_modal_open(false)}
@@ -442,5 +595,4 @@ export const F_Product_Page: React.FC = () => {
         </F_Main_Template >
     );
 };
-
 

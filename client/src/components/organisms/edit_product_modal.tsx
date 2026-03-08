@@ -2,14 +2,15 @@ import React from 'react';
 import { F_Modal } from '../molecules/modal';
 import { F_Product_Form } from './product_form';
 import { F_Get_Text } from '../../utils/i18n_utils';
-import { I_Product_Data, F_Save_Product } from '../../utils/storage_utils';
+import { I_Product_Data, F_Save_Product, F_Delete_Product_Video_Asset } from '../../utils/storage_utils';
 import { F_File_To_Base64 } from '../../utils/file_utils';
+import { F_Analyze_Config_Diff } from '../../utils/diff_utils';
 
 interface Edit_Product_Modal_Props {
     p_is_open: boolean;
     p_on_close: () => void;
     p_product: I_Product_Data;
-    p_on_update: () => void; // Callback to refresh parent data
+    p_on_update: () => void;
 }
 
 export const F_Edit_Product_Modal: React.FC<Edit_Product_Modal_Props> = ({
@@ -21,7 +22,6 @@ export const F_Edit_Product_Modal: React.FC<Edit_Product_Modal_Props> = ({
 
     const F_Handle_Submit = async (p_data: Partial<I_Product_Data>, p_front_file: File | null, p_back_file: File | null) => {
         try {
-            // Keep existing images if no new file is uploaded
             let front_b64 = p_product.raw_front;
             if (p_front_file) {
                 front_b64 = await F_File_To_Base64(p_front_file);
@@ -40,15 +40,53 @@ export const F_Edit_Product_Modal: React.FC<Edit_Product_Modal_Props> = ({
                 update_at: Date.now()
             };
 
-            // Update in DB (Async)
-            // F_Save_Product handles upsert in IndexedDB
+            const diff = F_Analyze_Config_Diff(p_product, updated_product);
+            const had_video = Boolean(p_product.model_video);
+
+            if (diff.hasChanges) {
+                updated_product.status = 'running';
+                updated_product.retry_count = 0;
+                updated_product.error_log = undefined;
+
+                if (diff.needsAnalysis) {
+                    updated_product.analysis_status = 'pending';
+                    updated_product.front_analyse = undefined;
+                    updated_product.back_analyse = undefined;
+                }
+
+                if (diff.needsSEO) {
+                    updated_product.seo_status = 'pending';
+                } else if (updated_product.seo_status !== 'completed') {
+                    updated_product.seo_status = 'completed';
+                }
+
+                if (diff.needsFront) {
+                    updated_product.front_status = 'pending';
+                    updated_product.model_front = undefined;
+                }
+
+                if (diff.needsBack) {
+                    updated_product.back_status = 'pending';
+                    updated_product.model_back = undefined;
+                }
+
+                const should_regenerate_video = diff.needsVideo && had_video;
+                if (should_regenerate_video) {
+                    updated_product.video_status = 'pending';
+                    updated_product.model_video = undefined;
+                    await F_Delete_Product_Video_Asset(updated_product.product_id);
+                } else if (updated_product.video_status !== 'completed') {
+                    updated_product.video_status = 'completed';
+                }
+            }
+
             await F_Save_Product(updated_product);
 
             p_on_update();
             p_on_close();
 
         } catch (error) {
-            console.error("Error updating product:", error);
+            console.error('Error updating product:', error);
             alert(F_Get_Text('common.error'));
         }
     };

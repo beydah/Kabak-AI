@@ -1,12 +1,13 @@
 ﻿import { I_Product_Data, I_Error_Log, I_Metric } from '../types/interfaces';
 
 const DB_NAME = 'KabakAI_DB';
-const DB_VERSION = 5;
+const DB_VERSION = 6;
 const STORE_PRODUCTS = 'products';
 const STORE_LOGS = 'error_logs';
 const STORE_METRICS = 'metrics';
 const STORE_DRAFTS = 'drafts';
 const STORE_SETTINGS = 'settings';
+const STORE_VIDEO_ASSETS = 'video_assets';
 
 class StorageService {
   private db: IDBDatabase | null = null;
@@ -40,6 +41,9 @@ class StorageService {
         }
         if (!db.objectStoreNames.contains(STORE_SETTINGS)) {
           db.createObjectStore(STORE_SETTINGS);
+        }
+        if (!db.objectStoreNames.contains(STORE_VIDEO_ASSETS)) {
+          db.createObjectStore(STORE_VIDEO_ASSETS, { keyPath: 'product_id' });
         }
       };
     });
@@ -145,6 +149,23 @@ class StorageService {
 
   async deleteProduct(id: string): Promise<void> {
     await this.delete(STORE_PRODUCTS, id);
+  }
+
+  async saveVideoAsset(product_id: string, video_blob: Blob, source_uri?: string): Promise<void> {
+    await this.put(STORE_VIDEO_ASSETS, {
+      product_id,
+      video_blob,
+      source_uri,
+      update_at: Date.now()
+    });
+  }
+
+  async getVideoAsset(product_id: string): Promise<{ product_id: string; video_blob: Blob; source_uri?: string; update_at: number } | undefined> {
+    return this.getById<{ product_id: string; video_blob: Blob; source_uri?: string; update_at: number }>(STORE_VIDEO_ASSETS, product_id);
+  }
+
+  async deleteVideoAsset(product_id: string): Promise<void> {
+    await this.delete(STORE_VIDEO_ASSETS, product_id);
   }
 
   async getAllLogs(): Promise<I_Error_Log[]> {

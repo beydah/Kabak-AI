@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { F_Main_Template } from '../../components/templates/main_template';
 import { F_Text } from '../../components/atoms/text';
@@ -10,6 +10,7 @@ import F_Storage_Dashboard from '../../components/molecules/storage_dashboard';
 import { F_Get_All_Products, I_Product_Data, F_Subscribe_To_Updates } from '../../utils/storage_utils';
 import { F_Filter_Bar, I_Filter_State } from '../../components/molecules/filter_bar';
 import { F_Detect_Gender_In_Query, F_Remove_Gender_Keywords } from '../../utils/keyword_utils';
+import { F_Download_Multiple_Files } from '../../utils/file_utils';
 
 export const F_Collection_Page: React.FC = () => {
     const navigate = useNavigate();
@@ -101,27 +102,18 @@ export const F_Collection_Page: React.FC = () => {
         F_Apply_Filters(all_products, current_filters);
     }, [all_products, current_filters, F_Apply_Filters]);
 
-    const F_Handle_Bulk_Download = (e: React.MouseEvent, p_product: I_Product_Data) => {
+    const F_Handle_Bulk_Download = async (e: React.MouseEvent, p_product: I_Product_Data) => {
         e.stopPropagation();
 
-        const downloadImage = (url: string, name: string) => {
-            const link = document.createElement('a');
-            link.href = url;
-            link.download = name;
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-        };
-
+        const items = [];
         if (p_product.raw_front) {
-            downloadImage(p_product.raw_front, `front_${p_product.product_id}.png`);
+            items.push({ url: p_product.raw_front, file_name: `front_${p_product.product_id}.png` });
+        }
+        if (p_product.raw_back) {
+            items.push({ url: p_product.raw_back as string, file_name: `back_${p_product.product_id}.png` });
         }
 
-        if (p_product.raw_back) {
-            setTimeout(() => {
-                downloadImage(p_product.raw_back as string, `back_${p_product.product_id}.png`);
-            }, 100);
-        }
+        await F_Download_Multiple_Files(items);
     };
 
     return (

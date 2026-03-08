@@ -6,6 +6,7 @@ export type { I_Product_Data, I_Error_Log, I_Metric }; // Re-export types
 const STORAGE_KEY_DRAFT = 'kabak_ai_draft';
 const STORAGE_KEY_THEME = 'kabak_ai_theme';
 const STORAGE_KEY_LANG = 'kabak_ai_lang';
+const VIDEO_LINK_KEY_PREFIX = 'model_video_link_';
 
 // MIGRATION TRIGGER
 // Fire and forget on load
@@ -23,6 +24,8 @@ export const F_Subscribe_To_Updates = (callback: () => void) => {
 const F_Notify_Table = () => {
     SYNC_CHANNEL.postMessage({ type: 'update' });
 };
+
+const F_Get_Video_Link_Key = (p_id: string) => `${VIDEO_LINK_KEY_PREFIX}${p_id}`;
 
 // PRODUCT OPERATIONS (ASYNC - IndexedDB)
 export const F_Save_Product = async (p_product: I_Product_Data) => {
@@ -114,8 +117,52 @@ export const F_Update_Product_Status = async (
 export const F_Delete_Product_By_Id = async (p_id: string) => {
     if (!p_id || p_id === 'undefined') return;
     await DB_Service.deleteProduct(p_id);
+    await DB_Service.deleteVideoAsset(p_id);
+    await DB_Service.deleteDraft(F_Get_Video_Link_Key(p_id));
     F_Notify_Table();
 }
+
+export const F_Save_Product_Video_Asset = async (p_id: string, p_video_blob: Blob, p_source_uri?: string) => {
+    if (!p_id || p_id === 'undefined') return;
+
+    await DB_Service.saveVideoAsset(p_id, p_video_blob, p_source_uri);
+
+    if (p_source_uri) {
+        await DB_Service.saveDraft(F_Get_Video_Link_Key(p_id), p_source_uri);
+    }
+
+    F_Notify_Table();
+};
+
+export const F_Get_Product_Video_Asset = async (p_id: string): Promise<{ video_blob: Blob; source_uri?: string } | null> => {
+    if (!p_id || p_id === 'undefined') return null;
+
+    const asset = await DB_Service.getVideoAsset(p_id);
+    if (!asset?.video_blob) return null;
+
+    return {
+        video_blob: asset.video_blob,
+        source_uri: asset.source_uri
+    };
+};
+
+export const F_Get_Product_Video_Link = async (p_id: string): Promise<string | null> => {
+    if (!p_id || p_id === 'undefined') return null;
+
+    const asset = await DB_Service.getVideoAsset(p_id);
+    if (asset?.source_uri) return asset.source_uri;
+
+    return await DB_Service.getDraft<string>(F_Get_Video_Link_Key(p_id));
+};
+
+export const F_Delete_Product_Video_Asset = async (p_id: string) => {
+    if (!p_id || p_id === 'undefined') return;
+
+    await DB_Service.deleteVideoAsset(p_id);
+    await DB_Service.deleteDraft(F_Get_Video_Link_Key(p_id));
+
+    F_Notify_Table();
+};
 
 export const F_Purge_Corrupt_Data = async () => {
     try {

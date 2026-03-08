@@ -1,4 +1,4 @@
-﻿import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
     I_Product_Data,
     F_Get_All_Products,
@@ -9,6 +9,7 @@ import {
     F_Remove_Error_Log,
     F_Save_Product,
     F_Delete_Product_By_Id,
+    F_Save_Product_Video_Asset,
 } from '../../utils/storage_utils';
 import { F_Get_Language } from '../../utils/i18n_utils';
 import { JobContext } from '../../context/JobContext';
@@ -129,7 +130,11 @@ export const F_Job_Provider: React.FC<{ children: React.ReactNode }> = ({ childr
                 product.model_front = generated_image;
                 product.front_status = 'completed';
 
-                if (product.back_status !== 'completed') product.back_status = 'pending';
+                if (!product.raw_back) {
+                    product.back_status = 'completed';
+                } else if (product.back_status !== 'completed') {
+                    product.back_status = 'pending';
+                }
 
                 await F_Save_Product(product);
                 return;
@@ -138,8 +143,12 @@ export const F_Job_Provider: React.FC<{ children: React.ReactNode }> = ({ childr
             if (product.back_status === 'pending') {
                 if (!product.raw_back) {
                     product.back_status = 'completed';
-                    product.status = 'finished';
-                    product.video_status = 'completed';
+                    if (product.video_status === 'pending') {
+                        product.status = 'running';
+                    } else {
+                        product.status = 'finished';
+                        if (!product.video_status) product.video_status = 'completed';
+                    }
                     product.error_log = undefined;
                     await F_Save_Product(product);
                     return;
@@ -159,11 +168,54 @@ export const F_Job_Provider: React.FC<{ children: React.ReactNode }> = ({ childr
 
                 product.model_back = back_gen;
                 product.back_status = 'completed';
-                product.status = 'finished';
-                product.video_status = 'completed';
+                if (product.video_status === 'pending') {
+                    product.status = 'running';
+                } else {
+                    product.status = 'finished';
+                    if (!product.video_status) product.video_status = 'completed';
+                }
                 product.error_log = undefined;
                 await F_Save_Product(product);
                 return;
+            }
+
+            if (product.video_status === 'pending') {
+                if (!product.model_front) {
+                    return;
+                }
+
+                product.video_status = 'updating';
+                product.error_log = 'Generating cinematic video preview...';
+                await F_Save_Product(product);
+
+                const { F_Generate_Video_Preview } = await import('../../services/gemini_service');
+                const generated_video = await F_Generate_Video_Preview(product);
+
+                if (!generated_video || !generated_video.video_blob) {
+                    throw new Error('Video generation failed (Empty)');
+                }
+
+                await F_Save_Product_Video_Asset(product.product_id, generated_video.video_blob, generated_video.fetch_url || generated_video.source_uri);
+
+                product.model_video = generated_video.fetch_url || generated_video.source_uri;
+                product.video_status = 'completed';
+                product.status = 'finished';
+                product.error_log = undefined;
+                await F_Save_Product(product);
+                return;
+            }
+
+            const is_workflow_done =
+                product.front_status === 'completed' &&
+                product.back_status === 'completed' &&
+                product.video_status !== 'pending' &&
+                product.video_status !== 'updating';
+
+            if (product.status === 'running' && is_workflow_done) {
+                product.status = 'finished';
+                if (!product.video_status) product.video_status = 'completed';
+                product.error_log = undefined;
+                await F_Save_Product(product);
             }
         } catch (error: any) {
             product.status = 'failed';

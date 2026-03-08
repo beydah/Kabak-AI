@@ -11,6 +11,13 @@ const LOGS_STORAGE_KEY = 'kabak_ai_logs';
 // Singleton Instance Holder
 let instance: GeminiService | null = null;
 
+export type I_Generated_Video_Result = {
+    playback_url: string;
+    source_uri: string;
+    fetch_url: string;
+    video_blob: Blob;
+};
+
 export class GeminiService {
     private ai: GoogleGenerativeAI;
     private apiKey: string;
@@ -342,7 +349,7 @@ export class GeminiService {
     }
 
     // --- VIDEO (Veo 3.1 Preview) ---
-    async generateVideo(input: ProductInput, imageBase64: string): Promise<string> {
+    async generateVideo(input: ProductInput, imageBase64: string): Promise<I_Generated_Video_Result> {
         console.log("[GeminiService] Generating Video with Veo 3.1 (New SDK)...");
 
         // @ts-ignore
@@ -424,7 +431,12 @@ export class GeminiService {
             }
 
             const blob = await res.blob();
-            return URL.createObjectURL(blob);
+            return {
+                playback_url: URL.createObjectURL(blob),
+                source_uri: uri,
+                fetch_url: fetchUrl,
+                video_blob: blob
+            };
         } catch (error) {
             console.error('Veo 3.1 Failed:', error);
             throw error;
@@ -541,7 +553,7 @@ export const F_Generate_Model_Image = async (p_product: I_Product_Data): Promise
     return await service.generateProductOnModel(input);
 };
 
-export const F_Generate_Video_Preview = async (p_product: I_Product_Data): Promise<string | null> => {
+export const F_Generate_Video_Preview = async (p_product: I_Product_Data): Promise<I_Generated_Video_Result | null> => {
     const service = GeminiService.getInstance();
     return await service.generateVideo({} as any, p_product.model_front || p_product.raw_front);
 };
