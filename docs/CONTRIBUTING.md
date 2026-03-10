@@ -1,10 +1,10 @@
-﻿# Contributing
+# Contributing
 
 Thanks for contributing to Kabak AI.
 
 ## Development Setup
 1. Install dependencies: `npm install`
-2. Configure env: `cp .env.example .env`
+2. Configure env: `copy .env.example .env`
 3. Start client: `npm run dev`
 4. Run checks: `npm run check`
 
@@ -23,7 +23,7 @@ Thanks for contributing to Kabak AI.
 ## Code Quality
 Before opening a PR:
 - Run `npm run typecheck`
-- Run `npm run build`
+- Run `npm run build:client`
 - Ensure no secret values are committed
 
 ## Security
