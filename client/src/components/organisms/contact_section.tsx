@@ -4,32 +4,29 @@ import { F_Icon } from '../atoms/icon';
 import { F_Button } from '../atoms/button';
 import { F_Get_Text } from '../../utils/i18n_utils';
 
-const CONTACT_INFO = {
-    email: F_Get_Text('contact.contact_email'),
-};
-
-const SOCIAL_LINKS = [
-    {
-        key: 'github_personal',
-        icon: 'github',
-        url: 'https://github.com/beydah',
-        label: F_Get_Text('contact.links.github_personal')
-    },
-    {
-        key: 'linkedin',
-        icon: 'linkedin',
-        url: 'https://linkedin.com/in/beydah',
-        label: F_Get_Text('contact.links.linkedin')
-    },
-    {
-        key: 'website',
-        icon: 'globe',
-        url: 'https://beydahsaglam.com',
-        label: F_Get_Text('contact.links.website')
-    },
-];
-
 export const F_Contact_Section: React.FC = () => {
+    const contact_email = F_Get_Text('contact.contact_email');
+    const social_links = [
+        {
+            key: 'github_personal',
+            icon: 'github',
+            url: 'https://github.com/beydah',
+            label: F_Get_Text('contact.links.github_personal')
+        },
+        {
+            key: 'linkedin',
+            icon: 'linkedin',
+            url: 'https://linkedin.com/in/beydah',
+            label: F_Get_Text('contact.links.linkedin')
+        },
+        {
+            key: 'website',
+            icon: 'globe',
+            url: 'https://beydahsaglam.com',
+            label: F_Get_Text('contact.links.website')
+        },
+    ];
+
     const F_Handle_Contact = () => {
         window.open('https://beydahsaglam.com', '_blank');
     };
@@ -56,10 +53,10 @@ export const F_Contact_Section: React.FC = () => {
                             <div className="text-left">
                                 <p className="text-sm text-secondary">{F_Get_Text('contact.email_label')}</p>
                                 <a
-                                    href={`mailto:${CONTACT_INFO.email}`}
+                                    href={`mailto:${contact_email}`}
                                     className="font-medium text-text-light dark:text-text-dark hover:text-primary transition-colors"
                                 >
-                                    {CONTACT_INFO.email}
+                                    {contact_email}
                                 </a>
                             </div>
                         </div>
@@ -82,7 +79,7 @@ export const F_Contact_Section: React.FC = () => {
                     <div>
                         <p className="text-sm text-secondary text-center mb-6">{F_Get_Text('contact.social_label')}</p>
                         <div className="flex justify-center flex-wrap gap-4">
-                            {SOCIAL_LINKS.map((link) => (
+                            {social_links.map((link) => (
                                 <a
                                     key={link.key}
                                     href={link.url}

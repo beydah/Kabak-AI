@@ -7,6 +7,7 @@ This folder contains project documentation and policies.
 - Contributing Guide: `CONTRIBUTING.md`
 - Security Policy: `SECURITY.md`
 - Model Notes: `MODELS.md`
+- Testing Notes: `TESTING.md`
 
 ## Environment
 Required:

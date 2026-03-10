@@ -25,6 +25,12 @@ const MODEL_INFO: Record<string, { rpd: number; desc_key: string; label: string;
         label: 'Gemini 3 Pro Image',
         color: 'from-amber-500 to-orange-500'
     },
+    'models/imagen-4.0-fast-generate-001': {
+        rpd: 50,
+        desc_key: 'analytics.model_desc.imagen_4_fast',
+        label: 'Imagen 4 Fast',
+        color: 'from-fuchsia-500 to-pink-500'
+    },
     'veo-3.1-generate-preview': {
         rpd: 10,
         desc_key: 'analytics.model_desc.veo_31',
@@ -155,7 +161,7 @@ export const F_Analytics_Dashboard: React.FC = () => {
                         onClick={F_Toggle_Currency}
                         className="px-3 py-1.5 rounded-xl text-xs font-bold bg-white dark:bg-bg-dark border border-secondary/10 text-primary shadow-sm hover:border-primary/30 transition-all uppercase flex items-center gap-1.5"
                     >
-                        {currency === 'TRY' ? <span className="text-sm">₺</span> : <DollarSign size={12} />}
+                        {currency === 'TRY' ? <span className="text-sm">ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Âº</span> : <DollarSign size={12} />}
                         {currency}
                     </button>
 

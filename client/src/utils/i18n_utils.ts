@@ -1,10 +1,13 @@
-﻿import lang_data from '../locales/lang.json';
+import React from 'react';
+import lang_data from '../locales/lang.json';
 import { F_Get_Preference, F_Set_Preference } from './storage_utils';
 
 type Language_Type = 'tr' | 'en';
 
 const DEFAULT_LANGUAGE: Language_Type = 'tr';
 const FALLBACK_CHAIN: Language_Type[] = ['tr', 'en'];
+const LANGUAGE_CHANGE_EVENT = 'kabak_ai_language_change';
+const STORAGE_LANG_KEY = 'kabak_ai_lang';
 
 const F_Read_Path = (obj: unknown, keys: string[]): string | null => {
   let current: any = obj;
@@ -32,6 +35,7 @@ export const F_Get_Language = (): Language_Type => {
 
 export const F_Set_Language = (p_language: Language_Type): void => {
   F_Set_Preference('lang', p_language);
+  window.dispatchEvent(new CustomEvent(LANGUAGE_CHANGE_EVENT, { detail: p_language }));
 };
 
 export const F_Get_Text = (p_key_path: string, p_language?: Language_Type): string => {
@@ -51,4 +55,30 @@ export const F_Get_Text = (p_key_path: string, p_language?: Language_Type): stri
   }
 
   return p_key_path;
+};
+
+export const F_Use_Language = (): Language_Type => {
+  const [current_lang, set_current_lang] = React.useState<Language_Type>(F_Get_Language());
+
+  React.useEffect(() => {
+    const F_Handle_Change = () => set_current_lang(F_Get_Language());
+    const F_Handle_Storage = (event: StorageEvent) => {
+      if (event.key === STORAGE_LANG_KEY) {
+        set_current_lang(F_Get_Language());
+      }
+    };
+
+    window.addEventListener(LANGUAGE_CHANGE_EVENT, F_Handle_Change);
+    window.addEventListener('storage', F_Handle_Storage);
+    return () => {
+      window.removeEventListener(LANGUAGE_CHANGE_EVENT, F_Handle_Change);
+      window.removeEventListener('storage', F_Handle_Storage);
+    };
+  }, []);
+
+  React.useEffect(() => {
+    document.documentElement.lang = current_lang;
+  }, [current_lang]);
+
+  return current_lang;
 };

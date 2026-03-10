@@ -28,6 +28,15 @@
       "cost_per_request": 0.002
     },
     {
+      "model_id": "models/imagen-4.0-fast-generate-001",
+      "category": "Image",
+      "daily_limit_rpd": 50,
+      "minute_limit_rpm": 10,
+      "current_usage_today": 0,
+      "is_primary": false,
+      "cost_per_request": 0.002
+    },
+    {
       "model_id": "veo-3.1-generate-preview",
       "category": "Video",
       "daily_limit_rpd": 10,

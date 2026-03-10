@@ -88,7 +88,7 @@ export const F_About_Section: React.FC = () => {
                             className="relative aspect-[4/5] rounded-3xl overflow-hidden border border-secondary/20 shadow-2xl bg-secondary/10 select-none cursor-ew-resize"
                         >
                             <img
-                                src="/images/about-before.jpg"
+                                src="/images/about-after.jpg"
                                 alt={F_Get_Text('about.before_label')}
                                 className="absolute inset-0 w-full h-full object-cover"
                                 draggable={false}
@@ -96,7 +96,7 @@ export const F_About_Section: React.FC = () => {
 
                             <div className="absolute inset-0" style={{ clipPath: `inset(0 ${100 - split_percent}% 0 0)` }}>
                                 <img
-                                    src="/images/about-after.jpg"
+                                    src="/images/about-before.jpg"
                                     alt={F_Get_Text('about.after_label')}
                                     className="absolute inset-0 w-full h-full object-cover"
                                     draggable={false}

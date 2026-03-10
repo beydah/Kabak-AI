@@ -156,31 +156,33 @@ export const F_Storage_Dashboard: React.FC = () => {
                         <h4 className="text-xs font-bold text-secondary uppercase flex items-center gap-2">
                             <Database size={12} /> {F_Get_Text('storage.items')}
                         </h4>
-                        <div className="bg-secondary/5 rounded-lg p-3 flex items-center justify-between group hover:bg-secondary/10 transition-colors">
-                            <div>
-                                <div className="text-sm font-bold text-text-light dark:text-text-dark">{stats.products} {F_Get_Text('storage.products')}</div>
-                                <div className="text-[10px] text-secondary">{F_Get_Text('storage.products_desc')}</div>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            <div className="bg-secondary/5 rounded-lg p-3 flex items-center justify-between group hover:bg-secondary/10 transition-colors">
+                                <div>
+                                    <div className="text-sm font-bold text-text-light dark:text-text-dark">{stats.products} {F_Get_Text('storage.products')}</div>
+                                    <div className="text-[10px] text-secondary">{F_Get_Text('storage.products_desc')}</div>
+                                </div>
+                                <button
+                                    onClick={() => set_confirm_target('products')}
+                                    className="p-2 text-secondary hover:text-red-500 hover:bg-white dark:hover:bg-bg-dark rounded-lg transition-all opacity-0 group-hover:opacity-100"
+                                    title={F_Get_Text('storage.actions.clear')}
+                                >
+                                    <Trash2 size={16} />
+                                </button>
                             </div>
-                            <button
-                                onClick={() => set_confirm_target('products')}
-                                className="p-2 text-secondary hover:text-red-500 hover:bg-white dark:hover:bg-bg-dark rounded-lg transition-all opacity-0 group-hover:opacity-100"
-                                title={F_Get_Text('storage.actions.clear')}
-                            >
-                                <Trash2 size={16} />
-                            </button>
-                        </div>
-                        <div className="bg-secondary/5 rounded-lg p-3 flex items-center justify-between group hover:bg-secondary/10 transition-colors">
-                            <div>
-                                <div className="text-sm font-bold text-text-light dark:text-text-dark">{stats.drafts} {F_Get_Text('storage.drafts')}</div>
-                                <div className="text-[10px] text-secondary">{F_Get_Text('storage.drafts_desc')}</div>
+                            <div className="bg-secondary/5 rounded-lg p-3 flex items-center justify-between group hover:bg-secondary/10 transition-colors">
+                                <div>
+                                    <div className="text-sm font-bold text-text-light dark:text-text-dark">{stats.drafts} {F_Get_Text('storage.drafts')}</div>
+                                    <div className="text-[10px] text-secondary">{F_Get_Text('storage.drafts_desc')}</div>
+                                </div>
+                                <button
+                                    onClick={() => set_confirm_target('drafts')}
+                                    className="p-2 text-secondary hover:text-red-500 hover:bg-white dark:hover:bg-bg-dark rounded-lg transition-all opacity-0 group-hover:opacity-100"
+                                    title={F_Get_Text('storage.actions.clear')}
+                                >
+                                    <Trash2 size={16} />
+                                </button>
                             </div>
-                            <button
-                                onClick={() => set_confirm_target('drafts')}
-                                className="p-2 text-secondary hover:text-red-500 hover:bg-white dark:hover:bg-bg-dark rounded-lg transition-all opacity-0 group-hover:opacity-100"
-                                title={F_Get_Text('storage.actions.clear')}
-                            >
-                                <Trash2 size={16} />
-                            </button>
                         </div>
                     </div>
 

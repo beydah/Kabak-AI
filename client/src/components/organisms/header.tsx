@@ -1,7 +1,7 @@
-﻿import React from 'react';
+import React from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { F_Theme_Toggle } from '../molecules/theme_toggle';
-import { F_Get_Text, F_Get_Language, F_Set_Language } from '../../utils/i18n_utils';
+import { F_Get_Text, F_Set_Language, F_Use_Language } from '../../utils/i18n_utils';
 import { F_Transition_Theme } from '../../utils/theme_utils';
 import { Menu, X, LogOut, Globe } from 'lucide-react';
 import { F_Notification_Dropdown } from './notification_dropdown';
@@ -16,7 +16,7 @@ export const F_Header: React.FC<Header_Props> = ({
 }) => {
     const location = useLocation();
     const navigate = useNavigate();
-    const [current_lang, set_current_lang] = React.useState(F_Get_Language());
+    const current_lang = F_Use_Language();
     const [is_menu_open, set_is_menu_open] = React.useState(false);
     const [is_scrolled, set_is_scrolled] = React.useState(false);
 
@@ -32,8 +32,6 @@ export const F_Header: React.FC<Header_Props> = ({
     const F_Handle_Language_Toggle = () => {
         const new_lang = current_lang === 'en' ? 'tr' : 'en';
         F_Set_Language(new_lang);
-        set_current_lang(new_lang);
-        window.location.reload();
     };
 
     const F_Handle_Logout = () => {
@@ -187,3 +185,5 @@ export const F_Header: React.FC<Header_Props> = ({
         </header>
     );
 };
+
+

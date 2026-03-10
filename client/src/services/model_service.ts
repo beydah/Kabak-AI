@@ -31,7 +31,7 @@ const COST_MAP: Record<string, number> = {
     'models/gemini-3-pro-image-preview': 0.002,
     'veo-3.1-generate-preview': 0.05,
     'veo-3.0-generate-001': 0.05,
-    'imagen-4.0-fast': 0.04
+    'models/imagen-4.0-fast-generate-001': 0.04
 };
 
 export class ModelService {

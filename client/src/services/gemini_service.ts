@@ -44,7 +44,8 @@ export class GeminiService {
 
     // --- GÃ–REV 1 & 2: GÃ–RSEL ÃœRETÄ°M (Gemini 3 Pro Image Preview) ---
     async generateProductOnModel(input: ProductInput): Promise<string> {
-        return this.modelService.executeWithFailover('image', async () => {
+        try {
+            return await this.modelService.executeWithFailover('image', async () => {
             let attempt = 0;
             const maxAttempts = 2;
             let currentFeedback = "";
@@ -158,6 +159,13 @@ export class GeminiService {
 
             return lastImage;
         }, 'models/gemini-3-pro-image-preview');
+        } catch (error) {
+            F_Debug_Warn('[GeminiService] Primary image model failed. Switching to fallback model...', error);
+            const fallbackPrompt = F_Build_Imagen_Prompt(input, input.raw_desc);
+            return await this.modelService.executeWithFailover('image', async () => {
+                return this.generateImagen(fallbackPrompt);
+            }, 'models/imagen-4.0-fast-generate-001');
+        }
     }
 
     // --- QC MODULE (Private) ---
@@ -259,11 +267,12 @@ export class GeminiService {
 
     // --- BACK VIEW (GEMINI 3 PRO - HIGH FIDELITY) ---
     async generateBackView(input: ProductInput, frontViewImage: string, seoContext?: string): Promise<string> {
+        try {
         // Updated to use the same high-fidelity model as Front View
         const modelName = 'models/gemini-3-pro-image-preview';
         F_Debug_Log(`[GeminiService] Generating Back View with ${modelName}...`);
 
-        return this.modelService.executeWithFailover('image', async () => {
+        return await this.modelService.executeWithFailover('image', async () => {
             let attempt = 0;
             const maxAttempts = 2;
             let currentFeedback = "";
@@ -348,6 +357,13 @@ export class GeminiService {
             }
             return lastImage;
         }, 'models/gemini-3-pro-image-preview');
+        } catch (error) {
+            F_Debug_Warn('[GeminiService] Back view model failed. Switching to fallback model...', error);
+            const fallbackPrompt = F_Build_Structured_Prompt(input, input.raw_desc, 'back');
+            return await this.modelService.executeWithFailover('image', async () => {
+                return this.generateImagen(fallbackPrompt);
+            }, 'models/imagen-4.0-fast-generate-001');
+        }
     }
 
     // --- VIDEO (Veo 3.1 Preview) ---
@@ -448,7 +464,7 @@ export class GeminiService {
 
     // Phase 2: Visual Analysis (Keep Flash)
     async analyzeImage(imageBase64: string, prompt: string): Promise<string> {
-        return this.modelService.executeWithFailover('image', async (model) => {
+        return await this.modelService.executeWithFailover('image', async (model) => {
             // Flash is perfect for analysis
             const modelName = 'gemini-2.0-flash';
             F_Debug_Log(`[GeminiService] ANALYZING with ${modelName}...`);
@@ -514,13 +530,13 @@ export class GeminiService {
         referenceImageBase64?: string
     ): Promise<string> {
         // We use Imagen 3 for the actual pixel generation
-        return this.modelService.executeWithFailover('image', async () => {
+        return await this.modelService.executeWithFailover('image', async () => {
             // We inject the "Description" of the input image into the prompt
             // because Imagen 3 (Public) is Text-to-Image.
             // The 'prompt' passed here is usually constructed from attributes.
             // Ideally we would double-check prompt quality.
             return this.generateImagen(prompt);
-        }, 'imagen-4.0-fast'); // Explicitly track Imagen usage (if used)
+        }, 'models/imagen-4.0-fast-generate-001'); // Explicitly track Imagen usage (if used)
     }
 }
 
@@ -533,6 +549,7 @@ export const F_Generate_SEO_Content = async (p_product: I_Product_Data, lang: 't
         productFit: p_product.kesim || 'Normal',
         backgroundColor: (p_product.background as BgOption) || BgOption.STUDIO,
         accessory: (p_product.aksesuar as Accessory) || Accessory.NONE,
+        raw_desc: p_product.raw_desc,
         frontImage: p_product.raw_front,
         backImage: p_product.raw_back || '',
         seo_context: contextOverride || p_product.raw_desc // Use override if provided
@@ -550,6 +567,7 @@ export const F_Generate_Model_Image = async (p_product: I_Product_Data): Promise
         productFit: p_product.kesim || 'Normal',
         backgroundColor: (p_product.background as BgOption) || BgOption.STUDIO,
         accessory: (p_product.aksesuar as Accessory) || Accessory.NONE,
+        raw_desc: p_product.raw_desc,
         frontImage: p_product.raw_front,
         backImage: p_product.raw_back || ''
     };
@@ -580,9 +598,16 @@ export const F_Generate_Back_View = async (p_product: I_Product_Data, front_view
         productFit: p_product.kesim || 'Normal',
         backgroundColor: (p_product.background as BgOption) || BgOption.STUDIO,
         accessory: (p_product.aksesuar as Accessory) || Accessory.NONE,
+        raw_desc: p_product.raw_desc,
         frontImage: p_product.raw_front,
         backImage: p_product.raw_back || ''
     };
     return await service.generateBackView(input, front_view);
 };
+
+
+
+
+
+
 

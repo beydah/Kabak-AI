@@ -69,12 +69,9 @@ Optional:
 - `npm run typecheck`
 - `npm run check`
 
-## Deployment (Netlify)
-`netlify.toml` is configured for SPA deployment.
-- Build command: `npm run build:client`
-- Publish directory: `client/dist`
-
-## Security
+## Deployment (Netlify)\n
+etlify.toml is configured for SPA deployment.\n- Build command: 
+pm run build:client\n- Publish directory: client/dist\n\n## Testing\nSee docs/TESTING.md for recent test runs.\n\n## Security
 See `docs/SECURITY.md`.
 
 ## Contributing

@@ -1,4 +1,4 @@
-﻿import React, { useState } from 'react';
+import React, { useState } from 'react';
 import { RotateCcw, Trash2, ChevronLeft, ChevronRight, AlertCircle, XCircle } from 'lucide-react';
 import { I_Product_Data, F_Update_Product_Status, F_Delete_Product_By_Id } from '../../utils/storage_utils';
 import { useJobManager } from '../../context/JobContext';
@@ -192,20 +192,6 @@ export const F_Product_Card: React.FC<Product_Card_Props> = ({ p_product, p_navi
                                     </button>
                                 </div>
                             )}
-
-                            {/* Video Download Button */}
-                            {p_product.model_video && (
-                                <div className="absolute bottom-2 right-2 z-30 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                                    <a
-                                        href={p_product.model_video}
-                                        download={`kabak_ai_video_${p_product.product_id}.mp4`}
-                                        onClick={(e) => e.stopPropagation()}
-                                        className="flex items-center gap-1.5 px-3 py-1.5 bg-primary/90 hover:bg-primary text-white text-xs font-bold rounded-full shadow-lg backdrop-blur-sm transition-all hover:scale-105"
-                                    >
-                                        <span>{F_Get_Text('product.download_video_tag')}</span>
-                                    </a>
-                                </div>
-                            )}
                         </>
                     )}
                 </div>
@@ -261,4 +247,7 @@ export const F_Product_Card: React.FC<Product_Card_Props> = ({ p_product, p_navi
         </>
     );
 };
+
+
+
 

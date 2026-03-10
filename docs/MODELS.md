@@ -2,8 +2,12 @@
 
 ## Current Production Models
 - Text: `gemini-2.5-flash` (primary), `gemini-2.0-flash` (fallback)
-- Image: `models/gemini-3-pro-image-preview` (primary)
+- Image: `models/gemini-3-pro-image-preview` (primary), `models/imagen-4.0-fast-generate-001` (fallback)
 - Video: `models/veo-3.1-generate-preview` (primary), `models/veo-3.0-generate-001` (fallback)
+
+## Failover Behavior
+- Image generation attempts `models/gemini-3-pro-image-preview` first; on errors it falls back to `models/imagen-4.0-fast-generate-001` using a structured prompt.
+- Back view generation uses the same image failover path.
 
 ## Discovery Snapshot
 The section below is a raw model list snapshot captured during API discovery.
@@ -190,3 +194,7 @@ Methods: ["countTokens","bidiGenerateContent"]
 Name: models/gemini-2.5-flash-native-audio-preview-12-2025
 Display: Gemini 2.5 Flash Native Audio Preview 12-2025
 Methods: ["countTokens","bidiGenerateContent"]
+
+
+
+

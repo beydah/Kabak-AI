@@ -18,6 +18,7 @@ const F_Get_Model_Detail_Key = (model_id: string) => {
         'gemini-2.0-flash': 'ai_models.model_details.gemini_20_flash',
         'gemini-2.5-flash': 'ai_models.model_details.gemini_25_flash',
         'models/gemini-3-pro-image-preview': 'ai_models.model_details.gemini_3_pro_image',
+        'models/imagen-4.0-fast-generate-001': 'ai_models.model_details.imagen_4_fast',
         'veo-3.1-generate-preview': 'ai_models.model_details.veo_31',
         'veo-3.0-generate-001': 'ai_models.model_details.veo_30'
     };
