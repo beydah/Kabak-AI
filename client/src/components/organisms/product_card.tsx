@@ -57,9 +57,9 @@ export const F_Product_Card: React.FC<Product_Card_Props> = ({ p_product, p_navi
 
     // Granular Status Helpers
     const is_seo_updating = p_product.seo_status === 'updating' || p_product.seo_status === 'pending';
-    const is_front_updating = p_product.front_status === 'updating' || (p_product.front_status === 'pending' && !p_product.model_front);
-    const is_back_updating = p_product.back_status === 'updating' || (p_product.back_status === 'pending' && has_back_image);
-    const is_video_updating = p_product.video_status === 'updating' || (p_product.video_status === 'pending' && p_product.front_status === 'completed');
+    const is_front_updating = p_product.front_status === 'updating' || p_product.front_status === 'pending';
+    const is_back_updating = p_product.back_status === 'updating' || p_product.back_status === 'pending';
+    const is_video_updating = p_product.video_status === 'updating' || p_product.video_status === 'pending';
 
     // Display Logic: 
     // If View is Front AND Generated Image exists -> Show Generated (Priority 1)
@@ -105,7 +105,7 @@ export const F_Product_Card: React.FC<Product_Card_Props> = ({ p_product, p_navi
                     )}
 
                     {/* Video Player (Veo 3.1) */}
-                    {p_product.model_video && (
+                    {p_product.model_video && !is_video_updating && (
                         <video
                             src={p_product.model_video}
                             autoPlay

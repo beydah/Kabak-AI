@@ -2,7 +2,7 @@ import React from 'react';
 import { F_Modal } from '../molecules/modal';
 import { F_Product_Form } from './product_form';
 import { F_Get_Text } from '../../utils/i18n_utils';
-import { I_Product_Data, F_Save_Product, F_Delete_Product_Video_Asset } from '../../utils/storage_utils';
+import { I_Product_Data, F_Save_Product } from '../../utils/storage_utils';
 import { F_File_To_Base64 } from '../../utils/file_utils';
 import { F_Analyze_Config_Diff } from '../../utils/diff_utils';
 
@@ -62,19 +62,15 @@ export const F_Edit_Product_Modal: React.FC<Edit_Product_Modal_Props> = ({
 
                 if (diff.needsFront) {
                     updated_product.front_status = 'pending';
-                    updated_product.model_front = undefined;
                 }
 
                 if (diff.needsBack) {
                     updated_product.back_status = 'pending';
-                    updated_product.model_back = undefined;
                 }
 
                 const should_regenerate_video = diff.needsVideo && had_video;
                 if (should_regenerate_video) {
                     updated_product.video_status = 'pending';
-                    updated_product.model_video = undefined;
-                    await F_Delete_Product_Video_Asset(updated_product.product_id);
                 } else if (updated_product.video_status !== 'completed') {
                     updated_product.video_status = 'completed';
                 }

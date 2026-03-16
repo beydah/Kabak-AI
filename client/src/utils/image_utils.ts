@@ -53,6 +53,12 @@ export const F_Optimize_Image_For_Imagen = F_Prepare_Image_For_Gemini;
 
 const DEFAULT_NORMALIZE_SIZE = 1024;
 const DEFAULT_NORMALIZE_QUALITY = 0.85;
+const HEIC_MIME_TYPES = [
+    'image/heic',
+    'image/heif',
+    'image/heic-sequence',
+    'image/heif-sequence'
+];
 
 const F_Read_File_As_DataUrl = (file: File): Promise<string> => {
     return new Promise((resolve, reject) => {
@@ -61,6 +67,14 @@ const F_Read_File_As_DataUrl = (file: File): Promise<string> => {
         reader.onload = () => resolve(reader.result as string);
         reader.onerror = () => reject(new Error("File read failed"));
     });
+};
+
+const F_Is_Heic_File = (file: File): boolean => {
+    const type = (file.type || '').toLowerCase();
+    if (HEIC_MIME_TYPES.includes(type)) return true;
+
+    const name = (file.name || '').toLowerCase();
+    return name.endsWith('.heic') || name.endsWith('.heif');
 };
 
 export const F_DataUrl_To_Blob = (dataUrl: string): Blob => {
@@ -91,7 +105,27 @@ export const F_Normalize_Image_File = async (
     maxSize: number = DEFAULT_NORMALIZE_SIZE,
     quality: number = DEFAULT_NORMALIZE_QUALITY
 ): Promise<{ data_url: string; mime_type: string }> => {
-    const dataUrl = await F_Read_File_As_DataUrl(file);
+    let workingFile = file;
+
+    if (F_Is_Heic_File(file)) {
+        try {
+            const mod = await import('heic2any');
+            const heic2any = (mod as any).default || mod;
+            const converted = await heic2any({
+                blob: file,
+                toType: 'image/jpeg',
+                quality
+            });
+            const blob = Array.isArray(converted) ? converted[0] : converted;
+            workingFile = new File([blob], file.name.replace(/\.[^/.]+$/, '.jpg'), {
+                type: 'image/jpeg'
+            });
+        } catch (error) {
+            console.warn('HEIC conversion failed. Falling back to original file.', error);
+        }
+    }
+
+    const dataUrl = await F_Read_File_As_DataUrl(workingFile);
 
     try {
         const img = new Image();
@@ -128,7 +162,7 @@ export const F_Normalize_Image_File = async (
         const normalizedUrl = canvas.toDataURL('image/jpeg', quality);
         return { data_url: normalizedUrl, mime_type: 'image/jpeg' };
     } catch (error) {
-        return { data_url: dataUrl, mime_type: file.type || 'image/jpeg' };
+        return { data_url: dataUrl, mime_type: workingFile.type || 'image/jpeg' };
     }
 };
 
