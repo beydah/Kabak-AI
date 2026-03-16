@@ -1,0 +1,709 @@
+import React, { useEffect, useState, useRef } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
+import { Edit2, Trash2, ChevronLeft, ChevronRight, Copy, Check, RotateCcw, Download, Video } from 'lucide-react';
+import { F_Main_Template } from '@/shared/ui/templates/main_template';
+import { F_Text } from '@/shared/ui/atoms/text';
+import { F_Button } from '@/shared/ui/atoms/button';
+import { F_Get_Text } from '@/shared/utils/i18n_utils';
+import {
+    F_Get_Product_By_Id,
+    F_Delete_Product_By_Id,
+    I_Product_Data,
+    F_Save_Product,
+    F_Get_Product_Video_Asset,
+    F_Get_Product_Video_Link,
+    F_Subscribe_To_Updates,
+    F_Add_Error_Log
+} from '@/shared/utils/storage_utils';
+import { F_Edit_Product_Modal } from '@/features/product/ui/edit_product_modal';
+import { F_Confirmation_Modal } from '@/shared/ui/molecules/confirmation_modal';
+import { F_Analyze_Image } from '@/shared/services/gemini_service';
+import { F_Download_Multiple_Files, I_Download_Item } from '@/shared/utils/file_utils';
+
+export const F_Product_Page: React.FC = () => {
+    const { id } = useParams<{ id: string }>();
+    const navigate = useNavigate();
+    const [product, set_product] = useState<I_Product_Data | undefined>(undefined);
+    const [video_url, set_video_url] = useState<string | null>(null);
+    const [is_generating_video, set_is_generating_video] = useState(false);
+    const [is_retrying, set_is_retrying] = useState(false);
+    const [copied_field, set_copied_field] = useState<string | null>(null);
+
+    const [active_image, set_active_image] = useState<'model_front' | 'model_back' | 'video'>('model_front');
+
+    const [is_edit_modal_open, set_is_edit_modal_open] = useState(false);
+    const [is_delete_modal_open, set_is_delete_modal_open] = useState(false);
+
+    const latest_blob_video_ref = useRef<string | null>(null);
+    const load_sequence_ref = useRef(0);
+
+    const F_Set_Video_URL = (p_next: string | null) => {
+        const previous = latest_blob_video_ref.current;
+        if (previous && previous !== p_next) {
+            URL.revokeObjectURL(previous);
+            latest_blob_video_ref.current = null;
+        }
+
+        if (p_next && p_next.startsWith('blob:')) {
+            latest_blob_video_ref.current = p_next;
+        }
+
+        set_video_url(p_next);
+    };
+
+    const F_Is_Video_Busy = (status?: I_Product_Data['video_status']) =>
+        status === 'generating' || status === 'pending' || status === 'updating';
+
+    useEffect(() => {
+        F_Load_Product();
+    }, [id]);
+
+    useEffect(() => {
+        if (!id) return;
+        const unsubscribe = F_Subscribe_To_Updates(() => {
+            F_Load_Product(true);
+        });
+        return () => unsubscribe();
+    }, [id]);
+
+    useEffect(() => {
+        return () => {
+            if (latest_blob_video_ref.current) {
+                URL.revokeObjectURL(latest_blob_video_ref.current);
+                latest_blob_video_ref.current = null;
+            }
+        };
+    }, []);
+
+    const F_Resolve_Video_URL = async (p_product: I_Product_Data): Promise<string | null> => {
+        const video_asset = await F_Get_Product_Video_Asset(p_product.product_id);
+        if (video_asset?.video_blob) {
+            const local_url = URL.createObjectURL(video_asset.video_blob);
+            return local_url;
+        }
+
+        const stored_link = await F_Get_Product_Video_Link(p_product.product_id);
+        const fallback_link = stored_link || p_product.model_video || null;
+        return fallback_link;
+    };
+
+    const F_Load_Product = async (p_keep_active: boolean = false) => {
+        if (!id) return;
+
+        const current_load = ++load_sequence_ref.current;
+        const data = await F_Get_Product_By_Id(id);
+        if (!data || current_load !== load_sequence_ref.current) return;
+
+        const resolved_video = await F_Resolve_Video_URL(data);
+        if (current_load !== load_sequence_ref.current) {
+            if (resolved_video && resolved_video.startsWith('blob:')) {
+                URL.revokeObjectURL(resolved_video);
+            }
+            return;
+        }
+
+        set_product(data);
+        F_Set_Video_URL(resolved_video);
+
+        if (!p_keep_active) {
+            const is_video_busy = F_Is_Video_Busy(data.video_status);
+            if (is_video_busy || resolved_video) {
+                set_active_image('video');
+            } else if (data.model_front) {
+                set_active_image('model_front');
+            } else {
+                set_active_image('model_front');
+            }
+        }
+    };
+
+    const F_Get_Image_Order = (): ('model_front' | 'model_back' | 'video')[] => {
+        const order: ('model_front' | 'model_back' | 'video')[] = [];
+        if (product?.model_front) order.push('model_front');
+        if (product?.model_back) order.push('model_back');
+        order.push('video');
+        return order;
+    };
+
+    const F_Next_Image = () => {
+        const order = F_Get_Image_Order();
+        if (order.length <= 1) return;
+
+        const current_index = order.indexOf(active_image);
+        const next_index = (current_index + 1) % order.length;
+        set_active_image(order[next_index]);
+    };
+
+    const F_Prev_Image = () => {
+        const order = F_Get_Image_Order();
+        if (order.length <= 1) return;
+
+        const current_index = order.indexOf(active_image);
+        const prev_index = (current_index - 1 + order.length) % order.length;
+        set_active_image(order[prev_index]);
+    };
+
+    const F_Handle_Download = async () => {
+        if (!product) return;
+
+        const items: I_Download_Item[] = [];
+
+        if (product.model_front) {
+            items.push({
+                url: product.model_front,
+                file_name: `model_front_${product.product_id}.jpg`
+            });
+        }
+
+        if (product.model_back) {
+            items.push({
+                url: product.model_back,
+                file_name: `model_back_${product.product_id}.jpg`
+            });
+        }
+
+        const video_asset = await F_Get_Product_Video_Asset(product.product_id);
+        if (video_asset?.video_blob) {
+            items.push({
+                blob: video_asset.video_blob,
+                file_name: `model_video_${product.product_id}.mp4`
+            });
+        } else if (video_url) {
+            items.push({
+                url: video_url,
+                file_name: `model_video_${product.product_id}.mp4`
+            });
+        } else if (product.model_video) {
+            items.push({
+                url: product.model_video,
+                file_name: `model_video_${product.product_id}.mp4`
+            });
+        }
+
+        if (items.length === 0) return;
+        await F_Download_Multiple_Files(items);
+    };
+
+    const F_Handle_Delete = async () => {
+        if (id) {
+            await F_Delete_Product_By_Id(id);
+            navigate('/collection');
+        }
+    };
+
+    const F_Handle_Generate_Video = async () => {
+        if (!product) return;
+        if (is_video_processing) return;
+
+        try {
+            set_is_generating_video(true);
+            const updated_product: I_Product_Data = {
+                ...product,
+                status: 'running',
+                video_status: 'generating',
+                update_at: Date.now()
+            };
+
+            await F_Save_Product(updated_product);
+            set_product(updated_product);
+            set_active_image('video');
+        } catch (error) {
+            console.error('Video Generation Error:', error);
+            const message = error instanceof Error ? error.message : F_Get_Text('common.error');
+            await F_Add_Error_Log({ product_id: product.product_id, message: `Video Generation Error: ${message}` }).catch(() => {});
+            alert(message);
+        } finally {
+            set_is_generating_video(false);
+        }
+    };
+
+    const F_Build_Analysis_Prompt = (p_target: 'model_front' | 'model_back') => {
+        if (p_target === 'model_front') {
+            return 'Analyze this generated FRONT model image for realism and fashion quality issues. Find anatomy, fabric, lighting, fit and artifact problems. Return concise Turkish bullet-style findings.';
+        }
+
+        return 'Analyze this generated BACK model image for realism and consistency issues. Find anatomy, alignment, garment-back details and artifact problems. Return concise Turkish bullet-style findings.';
+    };
+
+    const F_Build_Retry_Analysis_Prompt = (p_label: 'raw_front' | 'raw_back' | 'gen_front' | 'gen_back' | 'front_ref') => {
+        switch (p_label) {
+            case 'raw_front':
+                return 'Analyze RAW FRONT upload for garment details and constraints to preserve. Return concise Turkish bullet notes.';
+            case 'raw_back':
+                return 'Analyze RAW BACK upload for garment back details and constraints to preserve. Return concise Turkish bullet notes.';
+            case 'gen_front':
+                return 'Analyze GENERATED FRONT image for realism, anatomy, fabric accuracy, background/logo issues. Return concise Turkish bullet fixes.';
+            case 'gen_back':
+                return 'Analyze GENERATED BACK image for realism, anatomy, fabric accuracy, background/logo issues. Return concise Turkish bullet fixes.';
+            case 'front_ref':
+                return 'Analyze GENERATED FRONT image for consistency cues to apply on BACK view (lighting, pose, fit). Return concise Turkish bullet notes.';
+            default:
+                return F_Build_Analysis_Prompt('model_front');
+        }
+    };
+
+    const F_Analyze_With_Label = async (label: string, image?: string, prompt?: string) => {
+        if (!image) return null;
+        const analysis = await F_Analyze_Image(image, prompt || F_Build_Analysis_Prompt('model_front'));
+        return `${label}: ${analysis}`;
+    };
+
+    const F_Handle_Image_Fix = async (p_target: 'model_front' | 'model_back') => {
+        if (!product || is_retrying) return;
+
+        try {
+            set_is_retrying(true);
+
+            let analysis_summary: string | undefined;
+            const analysis_parts: (string | null)[] = [];
+
+            if (p_target === 'model_front') {
+                analysis_parts.push(
+                    await F_Analyze_With_Label('RAW FRONT', product.raw_front, F_Build_Retry_Analysis_Prompt('raw_front'))
+                );
+                analysis_parts.push(
+                    await F_Analyze_With_Label('GENERATED FRONT', product.model_front, F_Build_Retry_Analysis_Prompt('gen_front'))
+                );
+            } else {
+                analysis_parts.push(
+                    await F_Analyze_With_Label('RAW BACK', product.raw_back, F_Build_Retry_Analysis_Prompt('raw_back'))
+                );
+                analysis_parts.push(
+                    await F_Analyze_With_Label('GENERATED BACK', product.model_back, F_Build_Retry_Analysis_Prompt('gen_back'))
+                );
+                analysis_parts.push(
+                    await F_Analyze_With_Label('FRONT REFERENCE', product.model_front, F_Build_Retry_Analysis_Prompt('front_ref'))
+                );
+            }
+
+            analysis_summary = analysis_parts.filter(Boolean).join('\n');
+
+            const updated_product: I_Product_Data = {
+                ...product,
+                status: 'running',
+                retry_count: 0,
+                error_log: analysis_summary
+                    ? `Retry analysis (${p_target === 'model_front' ? 'front' : 'back'}): ${analysis_summary.slice(0, 220)}`
+                    : undefined,
+                analysis_status: 'completed',
+                seo_status: 'completed',
+                update_at: Date.now()
+            };
+
+            if (p_target === 'model_front') {
+                updated_product.front_status = 'generating_again';
+                updated_product.back_status = 'pending';
+                if (analysis_summary) updated_product.front_analyse = analysis_summary;
+
+                const has_video = Boolean(product.model_video || video_url);
+                if (has_video) {
+                    updated_product.video_status = 'generating';
+                } else {
+                    updated_product.video_status = updated_product.video_status || 'not_generate';
+                }
+
+                set_active_image('model_front');
+            } else {
+                updated_product.back_status = 'generating_again';
+                if (analysis_summary) updated_product.back_analyse = analysis_summary;
+                set_active_image('model_back');
+            }
+
+            await F_Save_Product(updated_product);
+            set_product(updated_product);
+        } catch (error) {
+            console.error('Retry/Fix Error:', error);
+            const message = error instanceof Error ? error.message : 'Unknown error';
+            await F_Add_Error_Log({ product_id: product.product_id, message: `Retry/Fix Error: ${message}` }).catch(() => {});
+            alert(F_Get_Text('common.error'));
+        } finally {
+            set_is_retrying(false);
+        }
+    };
+
+    const F_Handle_Main_Retry = async () => {
+        if (active_image === 'model_back') {
+            await F_Handle_Image_Fix('model_back');
+            return;
+        }
+
+        await F_Handle_Image_Fix('model_front');
+    };
+
+    const F_Copy_To_Clipboard = (text: string, field: string) => {
+        navigator.clipboard.writeText(text);
+        set_copied_field(field);
+        setTimeout(() => set_copied_field(null), 2000);
+    };
+
+    useEffect(() => {
+        if (!id || !product) return;
+
+        if (!F_Is_Video_Busy(product.video_status)) {
+            return;
+        }
+
+        const interval = setInterval(() => {
+            F_Load_Product(true);
+        }, 4000);
+
+        F_Load_Product(true);
+
+        return () => clearInterval(interval);
+    }, [id, product?.video_status]);
+
+    if (!product) {
+        return (
+            <F_Main_Template p_is_authenticated={true}>
+                <div className="container mx-auto px-4 py-8 text-center">
+                    <p className="text-secondary">{F_Get_Text('common.loading')}</p>
+                </div>
+            </F_Main_Template>
+        );
+    }
+
+    const has_multiple_images = F_Get_Image_Order().length > 1;
+    const is_front_processing = product.front_status === 'pending' || product.front_status === 'updating' || product.front_status === 'generating_again';
+    const is_back_processing = product.back_status === 'pending' || product.back_status === 'updating' || product.back_status === 'generating_again';
+    const is_front_retrying = product.front_status === 'generating_again';
+    const is_back_retrying = product.back_status === 'generating_again';
+    const is_video_processing = product.video_status === 'generating' || product.video_status === 'pending' || product.video_status === 'updating';
+
+    const front_src = product.model_front || product.raw_front;
+    const back_src = product.model_back || product.raw_back || product.raw_front;
+
+    const display_title = product.product_title || F_Get_Text('product.title');
+    const display_desc = product.product_desc || product.raw_desc || F_Get_Text('product.no_description');
+    const body_type_value = (product as any)['v\u00fccut_tipi'] ?? (product as any)['v\u00c3\u00bccut_tipi'];
+    const video_thumbnail_source = front_src || back_src || null;
+    const has_video_media = Boolean(video_url || product.model_video);
+    const show_video_player = Boolean(video_url) && !is_video_processing;
+    const show_video_generate = !has_video_media && !is_video_processing;
+    const show_video_processing = is_video_processing;
+
+    return (
+        <F_Main_Template p_is_authenticated={true}>
+            <div className="container mx-auto px-4 py-8 max-w-6xl">
+
+                <button
+                    onClick={() => navigate('/collection')}
+                    className="text-primary hover:underline font-medium mb-6 flex items-center gap-2"
+                >
+                    {F_Get_Text('new_product.back_to_collection')}
+                </button>
+
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
+
+                    <div className="space-y-4">
+                        <div className="aspect-[3/4] bg-white dark:bg-bg-dark rounded-xl shadow-sm border border-secondary/20 overflow-hidden relative group">
+
+                            {active_image === 'video' ? (
+                                <div className="w-full h-full relative flex items-center justify-center overflow-hidden bg-black">
+                                    {show_video_player ? (
+                                        <video
+                                            src={video_url as string}
+                                            controls
+                                            autoPlay
+                                            loop
+                                            className="w-full h-full object-cover"
+                                        />
+                                    ) : (
+                                        <>
+                                            <div
+                                                className={`absolute inset-0 bg-cover bg-center blur-md scale-110 ${has_video_media ? 'opacity-45' : 'opacity-55 grayscale'} ${video_thumbnail_source ? '' : 'bg-gradient-to-br from-secondary/30 to-secondary/10'}`}
+                                                style={video_thumbnail_source ? { backgroundImage: `url(${video_thumbnail_source})` } : undefined}
+                                            />
+                                            <div className="absolute inset-0 bg-black/30"></div>
+
+                                            {show_video_generate && (
+                                                <button
+                                                    className="relative z-10 flex flex-col items-center gap-4 group/btn transition-transform hover:scale-105 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
+                                                    onClick={F_Handle_Generate_Video}
+                                                    disabled={is_generating_video}
+                                                >
+                                                    <div className="p-5 bg-white/10 backdrop-blur-xl rounded-full border border-white/20 shadow-2xl group-hover/btn:bg-white/20 transition-all ring-1 ring-white/10">
+                                                        {is_generating_video ? (
+                                                            <div className="animate-spin w-10 h-10 border-4 border-white border-t-transparent rounded-full" />
+                                                        ) : (
+                                                            <Video size={40} className="text-white drop-shadow-md" />
+                                                        )}
+                                                    </div>
+                                                    <div className="px-6 py-2 bg-black/40 backdrop-blur-md rounded-full border border-white/10 text-white font-bold text-sm tracking-wide shadow-lg uppercase">
+                                                        {is_generating_video ? F_Get_Text('product.generating_video') : F_Get_Text('product.create_video')}
+                                                    </div>
+                                                </button>
+                                            )}
+
+                                            {show_video_processing && (
+                                                <div className="relative z-10 flex flex-col items-center gap-3 text-white">
+                                                    <div className="animate-spin w-10 h-10 border-4 border-white border-t-transparent rounded-full" />
+                                                    <div className="px-5 py-2 bg-black/50 backdrop-blur-md rounded-full border border-white/10 text-sm font-semibold tracking-wide uppercase">
+                                                        {F_Get_Text('product.generating_video')}
+                                                    </div>
+                                                </div>
+                                            )}
+                                        </>
+                                    )}
+                                </div>
+                            ) : (
+                                <div className="relative w-full h-full">
+                                    <img
+                                        key={active_image}
+                                        src={active_image === 'model_front' ? front_src : back_src}
+                                        alt="Main View"
+                                        className={`w-full h-full object-cover animate-fade-in transition-all duration-500 ${
+                                            active_image === 'model_front' && is_front_processing ? 'grayscale blur-md' : ''
+                                        } ${active_image === 'model_front' && is_front_retrying ? 'animate-breathe' : ''} ${
+                                            active_image === 'model_back' && is_back_processing ? 'grayscale blur-md' : ''
+                                        } ${active_image === 'model_back' && is_back_retrying ? 'animate-breathe' : ''}`}
+                                    />
+                                    {(active_image === 'model_front' && is_front_processing) && (
+                                        <div className="absolute inset-0 flex items-center justify-center bg-black/25">
+                                            <div className="flex flex-col items-center gap-2 text-white">
+                                                <div className="animate-spin w-8 h-8 border-4 border-white border-t-transparent rounded-full" />
+                                                <span className="text-xs font-semibold uppercase tracking-wide">
+                                                    {F_Get_Text('product.status.gen_front')}
+                                                </span>
+                                            </div>
+                                        </div>
+                                    )}
+                                    {(active_image === 'model_back' && is_back_processing) && (
+                                        <div className="absolute inset-0 flex items-center justify-center bg-black/25">
+                                            <div className="flex flex-col items-center gap-2 text-white">
+                                                <div className="animate-spin w-8 h-8 border-4 border-white border-t-transparent rounded-full" />
+                                                <span className="text-xs font-semibold uppercase tracking-wide">
+                                                    {F_Get_Text('product.status.gen_back')}
+                                                </span>
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
+                            )}
+
+                            {active_image !== 'video' && (
+                                <div className="absolute top-4 left-4 flex gap-2 z-20">
+                                    <button
+                                        onClick={(e) => { e.stopPropagation(); F_Handle_Main_Retry(); }}
+                                        disabled={is_retrying}
+                                        className="p-2 bg-black/40 hover:bg-black/60 backdrop-blur-sm text-white rounded-lg transition-colors disabled:opacity-50"
+                                        title={F_Get_Text('common.retry')}
+                                    >
+                                        <RotateCcw size={18} />
+                                    </button>
+                                    <button
+                                        onClick={(e) => { e.stopPropagation(); void F_Handle_Download(); }}
+                                        className="p-2 bg-black/40 hover:bg-black/60 backdrop-blur-sm text-white rounded-lg transition-colors"
+                                        title={F_Get_Text('product.download')}
+                                    >
+                                        <Download size={18} />
+                                    </button>
+                                </div>
+                            )}
+
+                            {has_multiple_images && (
+                                <div className="absolute inset-x-0 top-1/2 -translate-y-1/2 flex items-center justify-between px-4 pointer-events-none z-30">
+                                    <button
+                                        onClick={(e) => { e.stopPropagation(); F_Prev_Image(); }}
+                                        className="p-3 bg-black/60 text-white rounded-full pointer-events-auto transition-transform hover:scale-110 shadow-lg"
+                                        title={F_Get_Text('product.prev_image')}
+                                    >
+                                        <ChevronLeft size={24} />
+                                    </button>
+                                    <button
+                                        onClick={(e) => { e.stopPropagation(); F_Next_Image(); }}
+                                        className="p-3 bg-black/60 text-white rounded-full pointer-events-auto transition-transform hover:scale-110 shadow-lg"
+                                        title={F_Get_Text('product.next_image')}
+                                    >
+                                        <ChevronRight size={24} />
+                                    </button>
+                                </div>
+                            )}
+                        </div>
+
+                        <div className="flex gap-4 overflow-x-auto pb-2">
+                            {product.model_front && (
+                                <div className="relative flex-shrink-0">
+                                    <button
+                                        onClick={() => set_active_image('model_front')}
+                                        className={`w-24 h-32 rounded-lg border-2 overflow-hidden transition-all relative ${active_image === 'model_front'
+                                            ? 'border-primary ring-2 ring-primary/20'
+                                            : 'border-transparent hover:border-secondary/30'
+                                            }`}
+                                    >
+                                        <img
+                                            src={product.model_front}
+                                            alt="Model Front"
+                                            className={`w-full h-full object-cover ${is_front_processing ? 'grayscale blur-sm' : ''}`}
+                                        />
+                                    </button>
+                                </div>
+                            )}
+
+                            {product.model_back && (
+                                <div className="relative flex-shrink-0">
+                                    <button
+                                        onClick={() => set_active_image('model_back')}
+                                        className={`w-24 h-32 rounded-lg border-2 overflow-hidden transition-all relative ${active_image === 'model_back'
+                                            ? 'border-primary ring-2 ring-primary/20'
+                                            : 'border-transparent hover:border-secondary/30'
+                                            }`}
+                                    >
+                                        <img
+                                            src={product.model_back}
+                                            alt="Model Back"
+                                            className={`w-full h-full object-cover ${is_back_processing ? 'grayscale blur-sm' : ''}`}
+                                        />
+                                    </button>
+                                </div>
+                            )}
+
+                            <button
+                                onClick={() => set_active_image('video')}
+                                className={`flex-shrink-0 w-24 h-32 rounded-lg border-2 overflow-hidden transition-all relative group flex items-center justify-center bg-gray-900 ${active_image === 'video'
+                                    ? 'border-primary ring-2 ring-primary/20'
+                                    : 'border-transparent hover:border-secondary/30'
+                                    }`}
+                            >
+                                <div
+                                    className={`absolute inset-0 bg-cover bg-center blur-sm scale-110 ${has_video_media ? 'opacity-65' : 'opacity-55 grayscale'} ${video_thumbnail_source ? '' : 'bg-gradient-to-br from-secondary/40 to-secondary/20'} ${is_video_processing ? 'grayscale' : ''}`}
+                                    style={video_thumbnail_source ? { backgroundImage: `url(${video_thumbnail_source})` } : undefined}
+                                />
+                                <div className={`absolute inset-0 ${has_video_media ? 'bg-black/10' : 'bg-black/20'}`} />
+                                <Video size={24} className="text-white relative z-10" />
+                            </button>
+                        </div>
+                    </div>
+
+                    <div className="space-y-8">
+
+                        <div className="border-b border-secondary/10 pb-6">
+                            <div className="flex items-start justify-between gap-4">
+                                <F_Text p_variant="h1" p_class_name="mb-2 leading-tight">
+                                    {display_title}
+                                </F_Text>
+                                <button
+                                    onClick={() => F_Copy_To_Clipboard(display_title, 'title')}
+                                    className="p-2 text-secondary hover:text-primary transition-colors flex-shrink-0"
+                                    title={F_Get_Text('product.copy_title')}
+                                >
+                                    {copied_field === 'title' ? <Check size={20} className="text-green-500" /> : <Copy size={20} />}
+                                </button>
+                            </div>
+                            <p className="text-secondary text-sm mt-1">{F_Get_Text('product.id_label')}: {product.product_id}</p>
+                        </div>
+
+                        <div>
+                            <div className="flex items-center justify-between mb-2">
+                                <h3 className="text-lg font-semibold text-text-light dark:text-text-dark">
+                                    {F_Get_Text('new_product.labels.description')}
+                                </h3>
+                                <button
+                                    onClick={() => F_Copy_To_Clipboard(display_desc, 'desc')}
+                                    className="p-1.5 text-secondary hover:text-primary transition-colors text-sm flex items-center gap-1.5"
+                                    title={F_Get_Text('product.copy_description')}
+                                >
+                                    {copied_field === 'desc' ? (
+                                        <>
+                                            <Check size={16} className="text-green-500" />
+                                            <span className="text-green-500 font-medium">{F_Get_Text('product.copied')}</span>
+                                        </>
+                                    ) : (
+                                        <>
+                                            <Copy size={16} />
+                                            <span>{F_Get_Text('product.copy')}</span>
+                                        </>
+                                    )}
+                                </button>
+                            </div>
+                            <p className="text-secondary leading-relaxed whitespace-pre-line p-4 bg-secondary/5 rounded-lg border border-secondary/10 text-sm">
+                                {display_desc}
+                            </p>
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-y-4 gap-x-8">
+                            <div>
+                                <dt className="text-secondary text-sm">{F_Get_Text('new_product.labels.gender')}</dt>
+                                <dd className="font-medium capitalize text-text-light dark:text-text-dark">
+                                    {F_Get_Text(`new_product.options.gender.${product.gender ? 'female' : 'male'}`)}
+                                </dd>
+                            </div>
+                            <div>
+                                <dt className="text-secondary text-sm">{F_Get_Text('new_product.labels.age')}</dt>
+                                <dd className="font-medium text-text-light dark:text-text-dark">{product.age}</dd>
+                            </div>
+                            <div>
+                                <dt className="text-secondary text-sm">{F_Get_Text('new_product.labels.body_type')}</dt>
+                                <dd className="font-medium capitalize text-text-light dark:text-text-dark">
+                                    {body_type_value ? F_Get_Text(`new_product.options.body_type.${body_type_value}`) : body_type_value}
+                                </dd>
+                            </div>
+                            <div>
+                                <dt className="text-secondary text-sm">{F_Get_Text('new_product.labels.fit')}</dt>
+                                <dd className="font-medium capitalize text-text-light dark:text-text-dark">
+                                    {product.kesim ? F_Get_Text(`new_product.options.fit.${product.kesim}`) : product.kesim}
+                                </dd>
+                            </div>
+                            <div>
+                                <dt className="text-secondary text-sm">{F_Get_Text('new_product.labels.background')}</dt>
+                                <dd className="font-medium capitalize text-text-light dark:text-text-dark">
+                                    {product.background ? F_Get_Text(`new_product.options.background.${product.background}`) : product.background}
+                                </dd>
+                            </div>
+                            <div>
+                                <dt className="text-secondary text-sm">{F_Get_Text('new_product.labels.accessory')}</dt>
+                                <dd className="font-medium capitalize text-text-light dark:text-text-dark">
+                                    {product.aksesuar ? F_Get_Text(`new_product.options.accessory.${product.aksesuar}`) : product.aksesuar}
+                                </dd>
+                            </div>
+                        </div>
+
+                        <div className="flex items-center gap-4 pt-6 border-t border-secondary/10">
+                            <div className="flex gap-2">
+                                <button
+                                    onClick={() => set_is_edit_modal_open(true)}
+                                    className="p-3 rounded-lg bg-secondary/10 text-secondary hover:bg-secondary/20 hover:text-primary transition-colors tooltip-trigger"
+                                    title={F_Get_Text('product.edit')}
+                                >
+                                    <Edit2 size={24} />
+                                </button>
+                                <button
+                                    onClick={() => set_is_delete_modal_open(true)}
+                                    className="p-3 rounded-lg bg-red-500/10 text-red-500 hover:bg-red-500/20 transition-colors tooltip-trigger"
+                                    title={F_Get_Text('product.delete')}
+                                >
+                                    <Trash2 size={24} />
+                                </button>
+                            </div>
+
+                            <F_Button
+                                p_label={F_Get_Text('product.download')}
+                                p_variant="primary"
+                                p_class_name="flex-1 py-3 flex items-center justify-center gap-2"
+                                p_on_click={() => { void F_Handle_Download(); }}
+                            />
+                        </div>
+                    </div>
+                </div>
+
+                <F_Edit_Product_Modal
+                    p_is_open={is_edit_modal_open}
+                    p_on_close={() => set_is_edit_modal_open(false)}
+                    p_product={product}
+                    p_on_update={() => navigate('/collection')}
+                />
+
+                <F_Confirmation_Modal
+                    p_is_open={is_delete_modal_open}
+                    p_on_close={() => set_is_delete_modal_open(false)}
+                    p_on_confirm={F_Handle_Delete}
+                    p_title={F_Get_Text('product.confirm_delete_title')}
+                    p_message={F_Get_Text('product.confirm_delete_message')}
+                    p_confirm_label={F_Get_Text('product.delete_confirm_button')}
+                    p_cancel_label={F_Get_Text('product.cancel')}
+                />
+
+            </div>
+        </F_Main_Template >
+    );
+};
+
