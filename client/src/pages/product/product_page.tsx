@@ -34,6 +34,7 @@ export const F_Product_Page: React.FC = () => {
     const [is_delete_modal_open, set_is_delete_modal_open] = useState(false);
 
     const latest_blob_video_ref = useRef<string | null>(null);
+    const load_sequence_ref = useRef(0);
 
     const F_Set_Video_URL = (p_next: string | null) => {
         const previous = latest_blob_video_ref.current;
@@ -48,6 +49,9 @@ export const F_Product_Page: React.FC = () => {
 
         set_video_url(p_next);
     };
+
+    const F_Is_Video_Busy = (status?: I_Product_Data['video_status']) =>
+        status === 'generating' || status === 'pending' || status === 'updating';
 
     useEffect(() => {
         F_Load_Product();
@@ -70,34 +74,42 @@ export const F_Product_Page: React.FC = () => {
         };
     }, []);
 
-    const F_Load_Persisted_Video = async (p_product: I_Product_Data): Promise<string | null> => {
+    const F_Resolve_Video_URL = async (p_product: I_Product_Data): Promise<string | null> => {
         const video_asset = await F_Get_Product_Video_Asset(p_product.product_id);
         if (video_asset?.video_blob) {
             const local_url = URL.createObjectURL(video_asset.video_blob);
-            F_Set_Video_URL(local_url);
             return local_url;
         }
 
         const stored_link = await F_Get_Product_Video_Link(p_product.product_id);
         const fallback_link = stored_link || p_product.model_video || null;
-        F_Set_Video_URL(fallback_link);
         return fallback_link;
     };
 
     const F_Load_Product = async (p_keep_active: boolean = false) => {
         if (!id) return;
 
+        const current_load = ++load_sequence_ref.current;
         const data = await F_Get_Product_By_Id(id);
-        if (!data) return;
+        if (!data || current_load !== load_sequence_ref.current) return;
+
+        const resolved_video = await F_Resolve_Video_URL(data);
+        if (current_load !== load_sequence_ref.current) {
+            if (resolved_video && resolved_video.startsWith('blob:')) {
+                URL.revokeObjectURL(resolved_video);
+            }
+            return;
+        }
 
         set_product(data);
-        const resolved_video = await F_Load_Persisted_Video(data);
+        F_Set_Video_URL(resolved_video);
 
         if (!p_keep_active) {
-            if (data.model_front && !resolved_video) {
-                set_active_image('model_front');
-            } else if (resolved_video) {
+            const is_video_busy = F_Is_Video_Busy(data.video_status);
+            if (is_video_busy || resolved_video) {
                 set_active_image('video');
+            } else if (data.model_front) {
+                set_active_image('model_front');
             } else {
                 set_active_image('model_front');
             }
@@ -320,6 +332,22 @@ export const F_Product_Page: React.FC = () => {
         setTimeout(() => set_copied_field(null), 2000);
     };
 
+    useEffect(() => {
+        if (!id || !product) return;
+
+        if (!F_Is_Video_Busy(product.video_status)) {
+            return;
+        }
+
+        const interval = setInterval(() => {
+            F_Load_Product(true);
+        }, 4000);
+
+        F_Load_Product(true);
+
+        return () => clearInterval(interval);
+    }, [id, product?.video_status]);
+
     if (!product) {
         return (
             <F_Main_Template p_is_authenticated={true}>
@@ -346,7 +374,7 @@ export const F_Product_Page: React.FC = () => {
     const video_thumbnail_source = front_src || back_src || null;
     const has_video_media = Boolean(video_url || product.model_video);
     const show_video_player = Boolean(video_url) && !is_video_processing;
-    const show_video_generate = !video_url && !is_video_processing;
+    const show_video_generate = !has_video_media && !is_video_processing;
     const show_video_processing = is_video_processing;
 
     return (

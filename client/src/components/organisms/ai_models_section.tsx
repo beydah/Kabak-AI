@@ -2,7 +2,9 @@ import React, { useEffect, useState } from 'react';
 import { F_Text } from '../atoms/text';
 import { F_Get_Text } from '../../utils/i18n_utils';
 import { F_Get_Models, F_Increment_Usage, F_Decrement_Usage, F_Check_Daily_Reset, I_Model_Config } from '../../utils/model_utils';
-import { RotateCcw, Plus, Minus, Package, BrainCircuit, ImageIcon, Film, Info } from 'lucide-react';
+import { F_Get_Preference, F_Set_Preference } from '../../utils/storage_utils';
+import { F_Get_Exchange_Rate, F_Convert_Currency } from '../../services/currency_service';
+import { RotateCcw, Plus, Minus, Package, BrainCircuit, ImageIcon, Film, Info, DollarSign } from 'lucide-react';
 
 const CATEGORY_ORDER = ['Text Generation', 'Image', 'Video'] as const;
 
@@ -37,10 +39,26 @@ export const F_AI_Models_Section: React.FC = () => {
     const [models, set_models] = useState<I_Model_Config[]>([]);
     const [grouped_models, set_grouped_models] = useState<Record<string, I_Model_Config[]>>({});
     const [bundle_count, set_bundle_count] = useState(0);
+    const [currency, set_currency] = useState<'USD' | 'TRY'>('USD');
+    const [exchange_rate, set_exchange_rate] = useState(35);
 
     useEffect(() => {
         F_Load_Data();
+        void F_Init_Currency();
     }, []);
+
+    const F_Init_Currency = async () => {
+        const pref = F_Get_Preference('app_currency');
+        if (pref === 'TRY') set_currency('TRY');
+        const rate = await F_Get_Exchange_Rate();
+        set_exchange_rate(rate);
+    };
+
+    const F_Toggle_Currency = () => {
+        const next = currency === 'USD' ? 'TRY' : 'USD';
+        set_currency(next);
+        F_Set_Preference('app_currency', next);
+    };
 
     const F_Load_Data = () => {
         const data = F_Get_Models();
@@ -193,13 +211,22 @@ export const F_AI_Models_Section: React.FC = () => {
                         </div>
 
                         <div className="bg-white dark:bg-bg-dark rounded-2xl p-6 border border-secondary/20 shadow-sm">
-                            <h3 className="text-lg font-bold mb-4 text-text-light dark:text-text-dark">
-                                {F_Get_Text('pricing.estimated_cost')}
-                            </h3>
+                            <div className="flex items-center justify-between mb-4">
+                                <h3 className="text-lg font-bold text-text-light dark:text-text-dark">
+                                    {F_Get_Text('pricing.estimated_cost')}
+                                </h3>
+                                <button
+                                    onClick={F_Toggle_Currency}
+                                    className="px-3 py-1.5 rounded-xl text-xs font-bold bg-white dark:bg-bg-dark border border-secondary/10 text-primary shadow-sm hover:border-primary/30 transition-all uppercase flex items-center gap-1.5"
+                                >
+                                    {currency === 'TRY' ? <span className="text-sm">{'\u20BA'}</span> : <DollarSign size={12} />}
+                                    {currency}
+                                </button>
+                            </div>
 
                             <div className="p-6 bg-primary/5 rounded-xl border border-primary/20 mb-4 text-center">
                                 <span className="text-4xl font-black text-text-light dark:text-text-dark">
-                                    ${total_cost.toFixed(4)}
+                                    {F_Convert_Currency(total_cost, exchange_rate, currency)}
                                 </span>
                             </div>
 
