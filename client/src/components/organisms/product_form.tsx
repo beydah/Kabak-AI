@@ -4,6 +4,7 @@ import { F_File_Upload } from '../../components/molecules/file_upload';
 import { I_Product_Data, F_Save_Draft_Image, F_Get_Draft_Image, F_Remove_Draft_Image } from '../../utils/storage_utils';
 import { F_Get_Text } from '../../utils/i18n_utils';
 import { F_File_To_Base64 } from '../../utils/file_utils';
+import { F_DataUrl_To_File } from '../../utils/image_utils';
 
 const DRAFT_IMG_FRONT = 'kabak_draft_img_front';
 const DRAFT_IMG_BACK = 'kabak_draft_img_back';
@@ -60,16 +61,12 @@ export const F_Product_Form: React.FC<Product_Form_Props> = ({
             try {
                 const frontB64 = await F_Get_Draft_Image(DRAFT_IMG_FRONT);
                 if (mounted && frontB64 && !p_initial_data?.raw_front) {
-                    const res = await fetch(frontB64);
-                    const blob = await res.blob();
-                    set_front_file(new File([blob], 'draft_front.png', { type: 'image/png' }));
+                    set_front_file(F_DataUrl_To_File(frontB64, 'draft_front.jpg'));
                 }
 
                 const backB64 = await F_Get_Draft_Image(DRAFT_IMG_BACK);
                 if (mounted && backB64 && !p_initial_data?.raw_back) {
-                    const res = await fetch(backB64);
-                    const blob = await res.blob();
-                    set_back_file(new File([blob], 'draft_back.png', { type: 'image/png' }));
+                    set_back_file(F_DataUrl_To_File(backB64, 'draft_back.jpg'));
                 }
             } catch (e) {
                 console.error('Failed to load draft images', e);

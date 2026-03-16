@@ -1,4 +1,4 @@
-
+﻿
 import { ProductInput, Accessory, BgOption } from '../types/interfaces';
 
 interface TranslatedInput {
@@ -40,9 +40,9 @@ export const F_Translate_Inputs = (input: ProductInput): TranslatedInput => {
     if (bgLower === 'coffee' || bgLower === 'kahve') {
         background = 'Solid coffee brown studio background';
     } else if (bgInput === BgOption.URBAN || bgInput === 'urban') {
-        background = 'Modern city street, natural daylight, urban atmosphere, blurred background';
+        background = 'New York city skyline, iconic cityscape, natural daylight, no other people';
     } else if (bgInput === BgOption.LUXURY_CAFE || bgInput === 'cafe') {
-        background = 'High-end luxury cafe interior, soft ambient lighting, cozy atmosphere';
+        background = 'Starbucks cafe interior, warm ambient lighting, modern cafe, no other people';
     } else if (bgInput === BgOption.ORANGE || bgInput === 'orange') {
         background = 'Solid orange studio background, professional lighting';
     } else if (bgInput === BgOption.BLACK || bgInput === 'black') {
@@ -58,13 +58,15 @@ export const F_Translate_Inputs = (input: ProductInput): TranslatedInput => {
     const accInput = input.accessory as string;
 
     if (accInput === Accessory.BAG || accInput === 'bag' || accInput === 'Çanta') {
-        accessory = 'holding a stylish handbag';
+        accessory = gender === 'Male'
+            ? 'holding a business briefcase'
+            : 'holding a classic women\'s handbag';
     } else if (accInput === Accessory.GLASSES || accInput === 'glasses' || accInput === 'Güneş Gözlüğü') {
-        accessory = 'wearing modern sunglasses';
+        accessory = 'wearing thin black frame glasses with triangular orange lenses';
     } else if (accInput === Accessory.WALLET || accInput === 'wallet') {
-        accessory = 'holding a leather wallet';
+        accessory = 'holding an open wallet filled with cash';
     } else if (accInput === Accessory.CAR_KEY || accInput === 'car_key') {
-        accessory = 'holding a car key';
+        accessory = 'holding a Maserati logo visible key fob';
     }
 
     return {
@@ -79,7 +81,7 @@ export const F_Translate_Inputs = (input: ProductInput): TranslatedInput => {
 };
 
 export const F_Get_Negative_Prompt = (): string => {
-    return "deformed hands, blurry face, distorted textures, low resolution, watermark, text, messy background, missing limbs, extra limbs, bad anatomy, cropped head";
+    return "deformed hands, blurry face, distorted textures, low resolution, watermark, text, messy background, missing limbs, extra limbs, bad anatomy, cropped head, cropped body, cropped feet, partial body, seated pose, extra people, multiple people, crowd";
 };
 
 export const F_Smooth_Prompt = (prompt: string): string => {
@@ -94,7 +96,7 @@ export const F_Smooth_Prompt = (prompt: string): string => {
 
 const getSubjectBlock = (t: TranslatedInput, view: 'front' | 'back' | 'side' = 'front'): string => {
     const viewDesc = view === 'back' ? 'seen from behind' : 'front view';
-    return `Subject: ${t.gender} model, ${t.age} years old, ${t.body_type} physique, standing in a professional pose, ${viewDesc}.`;
+    return `Subject: ${t.gender} model, ${t.age} years old, ${t.body_type} physique, standing full-body (head-to-toe in frame), ${viewDesc}, single subject only, no other people.`;
 };
 
 const getApparelBlock = (t: TranslatedInput, seoDesc?: string): string => {
@@ -117,7 +119,7 @@ const getEnvironmentBlock = (t: TranslatedInput): string => {
         // REMOVED: "Studio", "Lighting", "Professional", "Soft Shadows"
         return `Background: Abstract solid ${t.background} color field. 2D flat background. Seamless paper. No depth. No horizon. No shadows. No props.`;
     }
-    return `Background: ${t.background}. Blurred depth-of-field.`;
+    return `Background: ${t.background}. Blurred depth-of-field. No other people.`;
 };
 
 export const F_Build_Structured_Prompt = (
@@ -132,7 +134,7 @@ export const F_Build_Structured_Prompt = (
 
     const header = `TASK: Professional Fashion Photography. Take the clothing item shown in IMAGE 1 and dress it onto a professional model.`;
 
-    const demographics = `Model: ${t.age} year old ${t.gender}, ${t.body_type} physique, professional pose.`;
+    const demographics = `Model: ${t.age} year old ${t.gender}, ${t.body_type} physique, standing full-body (head-to-toe in frame), single subject only, no other people.`;
 
     const fit = `Fit: Ensure the item has a ${t.fit} look on the model as requested.`;
 
@@ -144,13 +146,13 @@ export const F_Build_Structured_Prompt = (
     const environment = getEnvironmentBlock(t);
 
     const viewInstruction = viewType === 'back'
-        ? `VIEW: Back View (Model facing away from camera). Show the back of the outfit.`
-        : `VIEW: Front View. Full body shot.`;
+        ? `VIEW: Back View (Model facing away from camera). Full body shot, head-to-toe visible. Single subject only.`
+        : `VIEW: Front View. Full body shot, head-to-toe visible. Single subject only.`;
 
     let accessory = '';
     if (t.accessory) accessory = `Accessory: ${t.accessory}.`;
 
-    const hygiene = `Negative Constraints: (NO OBJECTS, NO STUDIO LIGHTS, NO STANDS, NO CHAIRS, NO BODY DISFIGURATION, NO MISSING LIMBS). Image must be a clean, high-fashion photograph.`;
+    const hygiene = `Negative Constraints: (NO OBJECTS, NO STUDIO LIGHTS, NO STANDS, NO CHAIRS, NO BODY DISFIGURATION, NO MISSING LIMBS, NO CROPPED BODY, NO CROPPED FEET, NO OTHER PEOPLE, NO CROWD). Image must be a clean, high-fashion photograph.`;
 
     // Combine
     const fullPrompt = `${header} ${demographics} ${fit} ${productInfo} ${environment} ${viewInstruction} ${accessory} ${hygiene}`;
@@ -177,14 +179,17 @@ export const F_Build_Video_Prompt = (input: ProductInput, customInstruction?: st
         movement = `${movement} ${customInstruction}.`;
     }
 
-    const subject = `Subject: ${t.gender} model wearing ${t.fit} clothing.`;
+    const subject = `Subject: ${t.gender} model wearing ${t.fit} clothing, standing full-body (head-to-toe in frame), single subject only, no other people.`;
+    const environment = `Environment: ${t.background}.`;
+    const accessory = t.accessory ? `Accessory: ${t.accessory}.` : '';
 
     // Using raw description if available for texture detail
     const productDetail = input.raw_desc ? `Clothing details: ${input.raw_desc}.` : `Focus on the clothing design details.`;
 
-    const lighting = `Cinematic lighting, high-end fashion commercial aesthetics. 4K resolution. Sharp focus. Shallow depth of field. Bokeh background.`;
+    const lighting = `Cinematic lighting, high-end fashion commercial aesthetics. 1080p resolution. Sharp focus. Shallow depth of field. Bokeh background.`;
 
-    const constraints = `NEGATIVE PROMPT: DO NOT SHOW THE BACK SIDE. FRONT VIEW ONLY. No rotation. No distortion. No text. No watermarks.`;
+    const constraints = `NEGATIVE PROMPT: DO NOT SHOW THE BACK SIDE. FRONT VIEW ONLY. No rotation. No distortion. No text. No watermarks. No other people. No crowd. Standing full-body, head-to-toe visible. No voice, no audio.`;
 
-    return `${movement} ${subject} ${productDetail} Fabric texture showcase. ${lighting} ${constraints}`;
+    return `${movement} ${subject} ${environment} ${accessory} ${productDetail} Fabric texture showcase. ${lighting} ${constraints}`;
 };
+

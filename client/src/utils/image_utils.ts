@@ -51,6 +51,87 @@ export const F_Prepare_Image_For_Gemini = (file: File): Promise<{ clean_base64: 
 // Deprecated alias for compatibility
 export const F_Optimize_Image_For_Imagen = F_Prepare_Image_For_Gemini;
 
+const DEFAULT_NORMALIZE_SIZE = 1024;
+const DEFAULT_NORMALIZE_QUALITY = 0.85;
+
+const F_Read_File_As_DataUrl = (file: File): Promise<string> => {
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.readAsDataURL(file);
+        reader.onload = () => resolve(reader.result as string);
+        reader.onerror = () => reject(new Error("File read failed"));
+    });
+};
+
+export const F_DataUrl_To_Blob = (dataUrl: string): Blob => {
+    const parts = dataUrl.split(',');
+    if (parts.length < 2) {
+        return new Blob([], { type: 'application/octet-stream' });
+    }
+
+    const header = parts[0] || '';
+    const base64 = parts.slice(1).join(',');
+    const mimeMatch = header.match(/data:([^;]+);base64/i);
+    const mime = mimeMatch?.[1] || 'application/octet-stream';
+    const binary = atob(base64);
+    const bytes = new Uint8Array(binary.length);
+    for (let i = 0; i < binary.length; i += 1) {
+        bytes[i] = binary.charCodeAt(i);
+    }
+    return new Blob([bytes], { type: mime });
+};
+
+export const F_DataUrl_To_File = (dataUrl: string, fileName: string): File => {
+    const blob = F_DataUrl_To_Blob(dataUrl);
+    return new File([blob], fileName, { type: blob.type || 'image/jpeg' });
+};
+
+export const F_Normalize_Image_File = async (
+    file: File,
+    maxSize: number = DEFAULT_NORMALIZE_SIZE,
+    quality: number = DEFAULT_NORMALIZE_QUALITY
+): Promise<{ data_url: string; mime_type: string }> => {
+    const dataUrl = await F_Read_File_As_DataUrl(file);
+
+    try {
+        const img = new Image();
+        img.src = dataUrl;
+
+        const imageEl = img as HTMLImageElement;
+        if (typeof imageEl.decode === 'function') {
+            await imageEl.decode();
+        } else {
+            await new Promise<void>((resolve, reject) => {
+                imageEl.onload = () => resolve();
+                imageEl.onerror = () => reject(new Error("Image load failed"));
+            });
+        }
+
+        const canvas = document.createElement('canvas');
+        canvas.width = maxSize;
+        canvas.height = maxSize;
+        const ctx = canvas.getContext('2d');
+
+        if (!ctx) {
+            return { data_url: dataUrl, mime_type: file.type || 'image/jpeg' };
+        }
+
+        ctx.fillStyle = "#FFFFFF";
+        ctx.fillRect(0, 0, maxSize, maxSize);
+
+        const scale = Math.min(maxSize / img.width, maxSize / img.height);
+        const x = (maxSize / 2) - (img.width / 2) * scale;
+        const y = (maxSize / 2) - (img.height / 2) * scale;
+
+        ctx.drawImage(img, x, y, img.width * scale, img.height * scale);
+
+        const normalizedUrl = canvas.toDataURL('image/jpeg', quality);
+        return { data_url: normalizedUrl, mime_type: 'image/jpeg' };
+    } catch (error) {
+        return { data_url: dataUrl, mime_type: file.type || 'image/jpeg' };
+    }
+};
+
 /**
  * Helper to optimize base64 string directly if File object not available
  */
