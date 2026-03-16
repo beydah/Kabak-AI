@@ -8,6 +8,7 @@ const DEFAULT_LANGUAGE: Language_Type = 'tr';
 const FALLBACK_CHAIN: Language_Type[] = ['tr', 'en'];
 const LANGUAGE_CHANGE_EVENT = 'kabak_ai_language_change';
 const STORAGE_LANG_KEY = 'kabak_ai_lang';
+let CURRENT_LANGUAGE_OVERRIDE: Language_Type | null = null;
 
 const F_Read_Path = (obj: unknown, keys: string[]): string | null => {
   let current: any = obj;
@@ -23,7 +24,7 @@ const F_Read_Path = (obj: unknown, keys: string[]): string | null => {
   return typeof current === 'string' ? current : null;
 };
 
-export const F_Get_Language = (): Language_Type => {
+const F_Get_Language_From_Preference = (): Language_Type => {
   const saved_lang = F_Get_Preference('lang');
   if (saved_lang === 'tr' || saved_lang === 'en') {
     return saved_lang;
@@ -33,7 +34,15 @@ export const F_Get_Language = (): Language_Type => {
   return browser_lang === 'tr' ? 'tr' : DEFAULT_LANGUAGE;
 };
 
+export const F_Get_Language = (): Language_Type => {
+  if (CURRENT_LANGUAGE_OVERRIDE) {
+    return CURRENT_LANGUAGE_OVERRIDE;
+  }
+  return F_Get_Language_From_Preference();
+};
+
 export const F_Set_Language = (p_language: Language_Type): void => {
+  CURRENT_LANGUAGE_OVERRIDE = p_language;
   F_Set_Preference('lang', p_language);
   window.dispatchEvent(new CustomEvent(LANGUAGE_CHANGE_EVENT, { detail: p_language }));
 };
@@ -61,10 +70,19 @@ export const F_Use_Language = (): Language_Type => {
   const [current_lang, set_current_lang] = React.useState<Language_Type>(F_Get_Language());
 
   React.useEffect(() => {
-    const F_Handle_Change = () => set_current_lang(F_Get_Language());
+    const F_Handle_Change = (event?: Event) => {
+      const next = (event as CustomEvent<Language_Type>)?.detail;
+      if (next === 'tr' || next === 'en') {
+        CURRENT_LANGUAGE_OVERRIDE = next;
+        set_current_lang(next);
+        return;
+      }
+      set_current_lang(F_Get_Language());
+    };
     const F_Handle_Storage = (event: StorageEvent) => {
       if (event.key === STORAGE_LANG_KEY) {
-        set_current_lang(F_Get_Language());
+        CURRENT_LANGUAGE_OVERRIDE = null;
+        set_current_lang(F_Get_Language_From_Preference());
       }
     };
 

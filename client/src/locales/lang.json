@@ -312,6 +312,7 @@
     },
     "notifications": {
       "title": "Bildirimler",
+      "hide": "Gizle",
       "empty": "Yeni bildirim yok",
       "clear_all": "Tümünü Temizle",
       "copy_all": "Hata Kayıtlarını Kopyala",
@@ -704,6 +705,7 @@
     },
     "notifications": {
       "title": "Notifications",
+      "hide": "Hide",
       "empty": "No new notifications",
       "clear_all": "Clear All",
       "copy_all": "Copy Error Logs",

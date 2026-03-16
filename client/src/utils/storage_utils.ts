@@ -311,7 +311,8 @@ export const F_Get_All_Metrics = async (): Promise<I_Metric[]> => {
 // Preference Utils using Cookies (as requested) + LocalStorage backup
 export const F_Set_Preference = (p_key: 'theme' | 'lang' | 'app_currency', p_value: string) => {
     // Set Cookie
-    document.cookie = `${p_key}=${p_value}; path=/; max-age=31536000; SameSite=Lax; Secure`; // 1 year
+    const secure_flag = window.location.protocol === 'https:' ? '; Secure' : '';
+    document.cookie = `${p_key}=${p_value}; path=/; max-age=31536000; SameSite=Lax${secure_flag}`; // 1 year
 
     // Set LocalStorage (redundancy)
     let ls_key = 'kabak_ai_currency';

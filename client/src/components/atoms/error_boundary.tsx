@@ -1,5 +1,6 @@
 import React, { Component, ErrorInfo, ReactNode } from 'react';
 import { F_Get_Text } from '../../utils/i18n_utils';
+import { F_Add_Error_Log } from '../../utils/storage_utils';
 
 interface Props {
     children?: ReactNode;
@@ -21,6 +22,7 @@ export class F_Error_Boundary extends Component<Props, State> {
 
     public componentDidCatch(error: Error, errorInfo: ErrorInfo) {
         console.error('Uncaught error:', error, errorInfo);
+        F_Add_Error_Log({ message: error.message || 'Render error' }).catch(() => {});
     }
 
     public render() {

@@ -7,6 +7,8 @@ import {
     F_Get_Error_Logs,
     F_Clear_Error_Logs,
     F_Remove_Error_Log,
+    F_Add_Error_Log,
+    F_Subscribe_To_Updates,
     F_Save_Product,
     F_Delete_Product_By_Id,
     F_Save_Product_Video_Asset,
@@ -45,6 +47,7 @@ export const F_Job_Provider: React.FC<{ children: React.ReactNode }> = ({ childr
             if (product.video_status === 'updating' || product.video_status === 'pending' || product.video_status === 'generating') product.video_status = 'error';
 
             await F_Save_Product(product);
+            await F_Add_Error_Log({ product_id: product.product_id, message: product.error_log || 'System Timeout' }).catch(() => {});
             return;
         }
 
@@ -242,12 +245,23 @@ export const F_Job_Provider: React.FC<{ children: React.ReactNode }> = ({ childr
             if (product.video_status === 'updating' || product.video_status === 'pending' || product.video_status === 'generating') product.video_status = 'error';
 
             await F_Save_Product(product);
+            await F_Add_Error_Log({ product_id: product.product_id, message: product.error_log || error.message }).catch(() => {});
         }
     };
 
     useEffect(() => {
         refresh_logs();
         let is_mounted = true;
+
+        const F_Handle_Error = (event: ErrorEvent) => {
+            const message = event.message || 'Unhandled error';
+            F_Add_Error_Log({ message }).catch(() => {});
+        };
+
+        const F_Handle_Rejection = (event: PromiseRejectionEvent) => {
+            const reason = event.reason instanceof Error ? event.reason.message : String(event.reason || 'Unhandled rejection');
+            F_Add_Error_Log({ message: reason }).catch(() => {});
+        };
 
         const F_Run_Job = async (product: I_Product_Data) => {
             if (processing_jobs_ref.current.has(product.product_id)) {
@@ -297,13 +311,21 @@ export const F_Job_Provider: React.FC<{ children: React.ReactNode }> = ({ childr
             }
         };
 
+        const unsubscribe = F_Subscribe_To_Updates(refresh_logs);
+
         tick();
         const interval = setInterval(tick, 5000);
+
+        window.addEventListener('error', F_Handle_Error);
+        window.addEventListener('unhandledrejection', F_Handle_Rejection);
 
         return () => {
             is_mounted = false;
             clearInterval(interval);
             processing_jobs_ref.current.clear();
+            window.removeEventListener('error', F_Handle_Error);
+            window.removeEventListener('unhandledrejection', F_Handle_Rejection);
+            unsubscribe();
         };
     }, []);
 
