@@ -12,7 +12,8 @@ import {
     F_Save_Product,
     F_Get_Product_Video_Asset,
     F_Get_Product_Video_Link,
-    F_Subscribe_To_Updates
+    F_Subscribe_To_Updates,
+    F_Add_Error_Log
 } from '../../utils/storage_utils';
 import { F_Edit_Product_Modal } from '../../components/organisms/edit_product_modal';
 import { F_Confirmation_Modal } from '../../components/molecules/confirmation_modal';
@@ -209,6 +210,7 @@ export const F_Product_Page: React.FC = () => {
         } catch (error) {
             console.error('Video Generation Error:', error);
             const message = error instanceof Error ? error.message : F_Get_Text('common.error');
+            await F_Add_Error_Log({ product_id: product.product_id, message: `Video Generation Error: ${message}` }).catch(() => {});
             alert(message);
         } finally {
             set_is_generating_video(false);
@@ -311,6 +313,8 @@ export const F_Product_Page: React.FC = () => {
             set_product(updated_product);
         } catch (error) {
             console.error('Retry/Fix Error:', error);
+            const message = error instanceof Error ? error.message : 'Unknown error';
+            await F_Add_Error_Log({ product_id: product.product_id, message: `Retry/Fix Error: ${message}` }).catch(() => {});
             alert(F_Get_Text('common.error'));
         } finally {
             set_is_retrying(false);

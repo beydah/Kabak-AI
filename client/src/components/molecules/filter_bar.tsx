@@ -88,8 +88,8 @@ export const F_Filter_Bar: React.FC<Filter_Bar_Props> = ({ p_on_filter_change })
             </div>
 
             {/* Expanded Filters */}
-            {(is_expanded || has_active_filters) && (
-                <div className="mt-4 pt-4 border-t border-secondary/10 grid grid-cols-2 md:grid-cols-5 gap-4 animate-fade-in relative z-[220] overflow-visible">
+            {is_expanded && (
+                <div className="mt-4 pt-4 border-t border-secondary/10 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 animate-fade-in relative z-[220] overflow-visible">
 
                     {/* Gender */}
                     <F_Combobox

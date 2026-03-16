@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Bell, AlertCircle, Copy, Trash2 } from 'lucide-react';
+import { Bell, AlertCircle, Copy, Trash2, X } from 'lucide-react';
 import { useJobManager } from '../../context/JobContext';
 import { F_Get_Text } from '../../utils/i18n_utils';
 
@@ -48,23 +48,32 @@ export const F_Notification_Dropdown: React.FC = () => {
                 <div className="absolute right-0 top-full mt-2 w-80 md:w-96 bg-white dark:bg-bg-dark border border-secondary/20 rounded-xl shadow-xl z-[1000] overflow-hidden animate-in fade-in slide-in-from-top-2">
                     <div className="p-3 border-b border-secondary/20 flex items-center justify-between bg-secondary/5">
                         <h3 className="font-semibold text-sm">{F_Get_Text('notifications.title')}</h3>
-                        {error_logs.length > 0 && (
-                            <div className="flex gap-2">
-                                <button
-                                    onClick={() => F_Copy_To_Clipboard(JSON.stringify(error_logs, null, 2))}
-                                    className={`text-xs hover:underline ${is_copied ? 'text-green-500 font-bold' : 'text-primary'}`}
-                                    disabled={is_copied}
-                                >
-                                    {is_copied ? F_Get_Text('notifications.copied') : F_Get_Text('notifications.copy_all')}
-                                </button>
-                                <button
-                                    onClick={clear_logs}
-                                    className="text-xs text-red-500 hover:underline"
-                                >
-                                    {F_Get_Text('notifications.clear_all')}
-                                </button>
-                            </div>
-                        )}
+                        <div className="flex items-center gap-2">
+                            {error_logs.length > 0 && (
+                                <>
+                                    <button
+                                        onClick={() => F_Copy_To_Clipboard(JSON.stringify(error_logs, null, 2))}
+                                        className={`text-xs hover:underline ${is_copied ? 'text-green-500 font-bold' : 'text-primary'}`}
+                                        disabled={is_copied}
+                                    >
+                                        {is_copied ? F_Get_Text('notifications.copied') : F_Get_Text('notifications.copy_all')}
+                                    </button>
+                                    <button
+                                        onClick={clear_logs}
+                                        className="text-xs text-red-500 hover:underline"
+                                    >
+                                        {F_Get_Text('notifications.clear_all')}
+                                    </button>
+                                </>
+                            )}
+                            <button
+                                onClick={() => set_show_notifications(false)}
+                                className="p-1 rounded hover:bg-secondary/10 text-secondary hover:text-primary"
+                                title={F_Get_Text('notifications.hide')}
+                            >
+                                <X size={14} />
+                            </button>
+                        </div>
                     </div>
                     <div className="max-h-64 overflow-y-auto">
                         {error_logs.length === 0 ? (

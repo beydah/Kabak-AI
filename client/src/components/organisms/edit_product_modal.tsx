@@ -2,7 +2,7 @@ import React from 'react';
 import { F_Modal } from '../molecules/modal';
 import { F_Product_Form } from './product_form';
 import { F_Get_Text } from '../../utils/i18n_utils';
-import { I_Product_Data, F_Save_Product } from '../../utils/storage_utils';
+import { I_Product_Data, F_Save_Product, F_Add_Error_Log } from '../../utils/storage_utils';
 import { F_File_To_Base64 } from '../../utils/file_utils';
 import { F_Analyze_Config_Diff } from '../../utils/diff_utils';
 
@@ -83,6 +83,8 @@ export const F_Edit_Product_Modal: React.FC<Edit_Product_Modal_Props> = ({
 
         } catch (error) {
             console.error('Error updating product:', error);
+            const message = error instanceof Error ? error.message : 'Unknown error';
+            await F_Add_Error_Log({ product_id: p_product.product_id, message: `Update Product Error: ${message}` }).catch(() => {});
             alert(F_Get_Text('common.error'));
         }
     };

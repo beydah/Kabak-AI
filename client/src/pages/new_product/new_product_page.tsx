@@ -5,7 +5,7 @@ import { F_Main_Template } from '../../components/templates/main_template';
 import { F_Text } from '../../components/atoms/text';
 import { F_Get_Text } from '../../utils/i18n_utils';
 import { F_Product_Form } from '../../components/organisms/product_form';
-import { F_Save_Product, I_Product_Data, F_Save_Draft, F_Get_Draft, F_Clear_Draft, F_Remove_Draft_Image, F_Get_Start_Defaults, F_Save_Start_Defaults } from '../../utils/storage_utils';
+import { F_Save_Product, I_Product_Data, F_Save_Draft, F_Get_Draft, F_Clear_Draft, F_Remove_Draft_Image, F_Get_Start_Defaults, F_Save_Start_Defaults, F_Add_Error_Log } from '../../utils/storage_utils';
 import { F_File_To_Base64 } from '../../utils/file_utils';
 
 export const F_New_Product_Page: React.FC = () => {
@@ -110,6 +110,8 @@ export const F_New_Product_Page: React.FC = () => {
 
         } catch (error) {
             console.error("Error creating product:", error);
+            const message = error instanceof Error ? error.message : 'Unknown error';
+            await F_Add_Error_Log({ message: `Create Product Error: ${message}` }).catch(() => {});
             alert(F_Get_Text('common.error'));
         }
     };
@@ -119,6 +121,8 @@ export const F_New_Product_Page: React.FC = () => {
             await F_Save_Draft(data);
         } catch (e) {
             console.error("Failed to save draft", e);
+            const message = e instanceof Error ? e.message : 'Unknown error';
+            await F_Add_Error_Log({ message: `Draft Save Error: ${message}` }).catch(() => {});
         }
     };
 
