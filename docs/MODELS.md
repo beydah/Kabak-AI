@@ -8,7 +8,7 @@
 
 ## Video Generation
 - Model: veo-3.1-generate-preview
-- Config: aspectRatio 9:16, resolution 1080p, compressionQuality LOSSLESS
+- Config: aspectRatio 9:16, resolution 1080p
 - Prompt constraints: standing full-body, single subject only, no other people, no voice or dialogue; instrumental music only if any
 
 ## Shared Prompt Constraints
@@ -22,3 +22,4 @@
 
 ## Notes
 - Structured prompts are used for Gemini and Imagen fallback to keep constraints consistent.
+- Gemini Developer API rejects `generateAudio` and `compressionQuality` for Veo; audio guidance is handled in prompt text.
