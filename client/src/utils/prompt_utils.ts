@@ -62,7 +62,7 @@ export const F_Translate_Inputs = (input: ProductInput): TranslatedInput => {
             ? 'holding a business briefcase'
             : 'holding a classic women\'s handbag';
     } else if (accInput === Accessory.GLASSES || accInput === 'glasses' || accInput === 'Güneş Gözlüğü') {
-        accessory = 'wearing thin black frame glasses with triangular orange lenses';
+        accessory = 'wearing thin black frame glasses with triangular orange lenses, frames complement the orange lenses, not square';
     } else if (accInput === Accessory.WALLET || accInput === 'wallet') {
         accessory = 'holding an open wallet filled with cash';
     } else if (accInput === Accessory.CAR_KEY || accInput === 'car_key') {

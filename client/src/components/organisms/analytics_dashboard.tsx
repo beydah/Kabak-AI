@@ -161,7 +161,7 @@ export const F_Analytics_Dashboard: React.FC = () => {
                         onClick={F_Toggle_Currency}
                         className="px-3 py-1.5 rounded-xl text-xs font-bold bg-white dark:bg-bg-dark border border-secondary/10 text-primary shadow-sm hover:border-primary/30 transition-all uppercase flex items-center gap-1.5"
                     >
-                        {currency === 'TRY' ? <span className="text-sm">ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Âº</span> : <DollarSign size={12} />}
+                        {currency === 'TRY' ? <span className="text-sm">{'\u20BA'}</span> : <DollarSign size={12} />}
                         {currency}
                     </button>
 

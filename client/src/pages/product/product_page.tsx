@@ -630,7 +630,7 @@ export const F_Product_Page: React.FC = () => {
                     p_is_open={is_edit_modal_open}
                     p_on_close={() => set_is_edit_modal_open(false)}
                     p_product={product}
-                    p_on_update={() => F_Load_Product(true)}
+                    p_on_update={() => navigate('/collection')}
                 />
 
                 <F_Confirmation_Modal
