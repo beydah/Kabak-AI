@@ -40,9 +40,9 @@ export const F_Translate_Inputs = (input: ProductInput): TranslatedInput => {
     if (bgLower === 'coffee' || bgLower === 'kahve') {
         background = 'Solid coffee brown studio background';
     } else if (bgInput === BgOption.URBAN || bgInput === 'urban') {
-        background = 'New York city skyline, iconic cityscape, natural daylight, no other people';
+        background = 'New York city street/avenue, street-level sidewalk scene, natural daylight, no other people';
     } else if (bgInput === BgOption.LUXURY_CAFE || bgInput === 'cafe') {
-        background = 'Starbucks cafe interior, warm ambient lighting, modern cafe, no other people';
+        background = 'Brandless Starbucks-style cafe interior, warm ambient lighting, modern cafe, no logos, no branding, no text, no other people';
     } else if (bgInput === BgOption.ORANGE || bgInput === 'orange') {
         background = 'Solid orange studio background, professional lighting';
     } else if (bgInput === BgOption.BLACK || bgInput === 'black') {
@@ -81,7 +81,7 @@ export const F_Translate_Inputs = (input: ProductInput): TranslatedInput => {
 };
 
 export const F_Get_Negative_Prompt = (): string => {
-    return "deformed hands, blurry face, distorted textures, low resolution, watermark, text, messy background, missing limbs, extra limbs, bad anatomy, cropped head, cropped body, cropped feet, partial body, seated pose, extra people, multiple people, crowd";
+    return "deformed hands, blurry face, distorted textures, low resolution, watermark, text, messy background, background logos, background signage, background brand text, missing limbs, extra limbs, bad anatomy, cropped head, cropped body, cropped feet, partial body, seated pose, extra people, multiple people, crowd";
 };
 
 export const F_Smooth_Prompt = (prompt: string): string => {
@@ -149,13 +149,15 @@ export const F_Build_Structured_Prompt = (
         ? `VIEW: Back View (Model facing away from camera). Full body shot, head-to-toe visible. Single subject only.`
         : `VIEW: Front View. Full body shot, head-to-toe visible. Single subject only.`;
 
+    const quality = `Quality: High-end editorial fashion photography. Crisp fabric texture, realistic skin detail, clean focus, balanced lighting, subtle depth of field.`;
+
     let accessory = '';
     if (t.accessory) accessory = `Accessory: ${t.accessory}.`;
 
     const hygiene = `Negative Constraints: (NO OBJECTS, NO STUDIO LIGHTS, NO STANDS, NO CHAIRS, NO BODY DISFIGURATION, NO MISSING LIMBS, NO CROPPED BODY, NO CROPPED FEET, NO OTHER PEOPLE, NO CROWD). Image must be a clean, high-fashion photograph.`;
 
     // Combine
-    const fullPrompt = `${header} ${demographics} ${fit} ${productInfo} ${environment} ${viewInstruction} ${accessory} ${hygiene}`;
+    const fullPrompt = `${header} ${demographics} ${fit} ${productInfo} ${environment} ${viewInstruction} ${quality} ${accessory} ${hygiene}`;
 
     return F_Smooth_Prompt(fullPrompt);
 };
@@ -186,9 +188,9 @@ export const F_Build_Video_Prompt = (input: ProductInput, customInstruction?: st
     // Using raw description if available for texture detail
     const productDetail = input.raw_desc ? `Clothing details: ${input.raw_desc}.` : `Focus on the clothing design details.`;
 
-    const lighting = `Cinematic lighting, high-end fashion commercial aesthetics. 1080p resolution. Sharp focus. Shallow depth of field. Bokeh background.`;
+    const lighting = `High-end editorial fashion film. Cinematic lighting, stabilized camera, clean exposure. 1080p resolution. Sharp focus. Shallow depth of field. Bokeh background.`;
 
-    const constraints = `NEGATIVE PROMPT: DO NOT SHOW THE BACK SIDE. FRONT VIEW ONLY. No rotation. No distortion. No text. No watermarks. No other people. No crowd. Standing full-body, head-to-toe visible. No voice, no audio.`;
+    const constraints = `NEGATIVE PROMPT: DO NOT SHOW THE BACK SIDE. FRONT VIEW ONLY. No rotation. No distortion. No text. No watermarks. No background logos or signage. No other people. No crowd. Standing full-body, head-to-toe visible. No voice, no dialogue. Instrumental music only if any.`;
 
     return `${movement} ${subject} ${environment} ${accessory} ${productDetail} Fabric texture showcase. ${lighting} ${constraints}`;
 };

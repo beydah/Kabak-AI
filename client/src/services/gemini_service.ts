@@ -403,7 +403,6 @@ export class GeminiService {
                     aspectRatio: '9:16',
                     resolution: '1080p',
                     compressionQuality: VideoCompressionQuality.LOSSLESS,
-                    generateAudio: false,
                 },
             });
 

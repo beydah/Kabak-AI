@@ -8,13 +8,13 @@
 
 ## Video Generation
 - Model: veo-3.1-generate-preview
-- Config: aspectRatio 9:16, resolution 1080p, compressionQuality LOSSLESS, generateAudio false
-- Prompt constraints: standing full-body, single subject only, no other people, no voice/no audio
+- Config: aspectRatio 9:16, resolution 1080p, compressionQuality LOSSLESS
+- Prompt constraints: standing full-body, single subject only, no other people, no voice or dialogue; instrumental music only if any
 
 ## Shared Prompt Constraints
 - Full-body, standing, single subject only; no other people in frame.
-- Cafe background: Starbucks cafe interior.
-- Urban background: New York city skyline/cityscape.
+- Cafe background: Brandless Starbucks-style cafe interior (no logos/branding/text).
+- Urban background: New York city street/avenue, street-level sidewalk scene.
 - Accessory detail: Maserati logo visible key fob.
 - Accessory detail: Open wallet filled with cash.
 - Accessory detail: Thin black frame glasses with triangular orange lenses.

@@ -13,7 +13,7 @@ import {
     F_Save_Product_Video_Asset,
     F_Get_Product_Video_Asset,
     F_Get_Product_Video_Link,
-    F_Delete_Product_Video_Asset
+    F_Subscribe_To_Updates
 } from '../../utils/storage_utils';
 import { F_Edit_Product_Modal } from '../../components/organisms/edit_product_modal';
 import { F_Confirmation_Modal } from '../../components/molecules/confirmation_modal';
@@ -55,6 +55,14 @@ export const F_Product_Page: React.FC = () => {
     }, [id]);
 
     useEffect(() => {
+        if (!id) return;
+        const unsubscribe = F_Subscribe_To_Updates(() => {
+            F_Load_Product(true);
+        });
+        return () => unsubscribe();
+    }, [id]);
+
+    useEffect(() => {
         return () => {
             if (latest_blob_video_ref.current) {
                 URL.revokeObjectURL(latest_blob_video_ref.current);
@@ -77,7 +85,7 @@ export const F_Product_Page: React.FC = () => {
         return fallback_link;
     };
 
-    const F_Load_Product = async () => {
+    const F_Load_Product = async (p_keep_active: boolean = false) => {
         if (!id) return;
 
         const data = await F_Get_Product_By_Id(id);
@@ -86,12 +94,14 @@ export const F_Product_Page: React.FC = () => {
         set_product(data);
         const resolved_video = await F_Load_Persisted_Video(data);
 
-        if (data.model_front && !resolved_video) {
-            set_active_image('model_front');
-        } else if (resolved_video) {
-            set_active_image('video');
-        } else {
-            set_active_image('model_front');
+        if (!p_keep_active) {
+            if (data.model_front && !resolved_video) {
+                set_active_image('model_front');
+            } else if (resolved_video) {
+                set_active_image('video');
+            } else {
+                set_active_image('model_front');
+            }
         }
     };
 
@@ -245,16 +255,11 @@ export const F_Product_Page: React.FC = () => {
             if (p_target === 'model_front') {
                 updated_product.front_status = 'pending';
                 updated_product.back_status = 'pending';
-                updated_product.model_front = undefined;
-                updated_product.model_back = undefined;
                 if (analysis_summary) updated_product.front_analyse = analysis_summary;
 
                 const has_video = Boolean(product.model_video || video_url);
                 if (has_video) {
                     updated_product.video_status = 'pending';
-                    updated_product.model_video = undefined;
-                    await F_Delete_Product_Video_Asset(product.product_id);
-                    F_Set_Video_URL(null);
                 } else {
                     updated_product.video_status = 'completed';
                 }
@@ -263,7 +268,6 @@ export const F_Product_Page: React.FC = () => {
             } else {
                 updated_product.back_status = 'pending';
                 updated_product.video_status = 'completed';
-                updated_product.model_back = undefined;
                 if (analysis_summary) updated_product.back_analyse = analysis_summary;
                 set_active_image('model_back');
             }
@@ -304,12 +308,21 @@ export const F_Product_Page: React.FC = () => {
     }
 
     const has_multiple_images = F_Get_Image_Order().length > 1;
+    const is_front_processing = product.front_status === 'pending' || product.front_status === 'updating';
+    const is_back_processing = product.back_status === 'pending' || product.back_status === 'updating';
+    const is_video_processing = product.video_status === 'pending' || product.video_status === 'updating';
+
+    const front_src = product.model_front || product.raw_front;
+    const back_src = product.model_back || product.raw_back || product.raw_front;
 
     const display_title = product.product_title || F_Get_Text('product.title');
     const display_desc = product.product_desc || product.raw_desc || F_Get_Text('product.no_description');
     const body_type_value = (product as any)['v\u00fccut_tipi'] ?? (product as any)['v\u00c3\u00bccut_tipi'];
-    const video_thumbnail_source = product.model_front || product.raw_front || product.model_back || product.raw_back || null;
+    const video_thumbnail_source = front_src || back_src || null;
     const has_video_media = Boolean(video_url || product.model_video);
+    const show_video_player = Boolean(video_url) && !is_video_processing;
+    const show_video_generate = !video_url && !is_video_processing;
+    const show_video_processing = is_video_processing;
 
     return (
         <F_Main_Template p_is_authenticated={true}>
@@ -329,9 +342,9 @@ export const F_Product_Page: React.FC = () => {
 
                             {active_image === 'video' ? (
                                 <div className="w-full h-full relative flex items-center justify-center overflow-hidden bg-black">
-                                    {video_url ? (
+                                    {show_video_player ? (
                                         <video
-                                            src={video_url}
+                                            src={video_url as string}
                                             controls
                                             autoPlay
                                             loop
@@ -340,36 +353,72 @@ export const F_Product_Page: React.FC = () => {
                                     ) : (
                                         <>
                                             <div
-                                                className={`absolute inset-0 bg-cover bg-center blur-md scale-110 ${has_video_media ? 'opacity-45' : 'opacity-55 grayscale'} ${video_thumbnail_source ? '' : 'bg-gradient-to-br from-secondary/30 to-secondary/10'}` }
+                                                className={`absolute inset-0 bg-cover bg-center blur-md scale-110 ${has_video_media ? 'opacity-45' : 'opacity-55 grayscale'} ${video_thumbnail_source ? '' : 'bg-gradient-to-br from-secondary/30 to-secondary/10'}`}
                                                 style={video_thumbnail_source ? { backgroundImage: `url(${video_thumbnail_source})` } : undefined}
                                             />
                                             <div className="absolute inset-0 bg-black/30"></div>
-                                            <button
-                                                className="relative z-10 flex flex-col items-center gap-4 group/btn transition-transform hover:scale-105 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
-                                                onClick={F_Handle_Generate_Video}
-                                                disabled={is_generating_video}
-                                            >
-                                                <div className="p-5 bg-white/10 backdrop-blur-xl rounded-full border border-white/20 shadow-2xl group-hover/btn:bg-white/20 transition-all ring-1 ring-white/10">
-                                                    {is_generating_video ? (
-                                                        <div className="animate-spin w-10 h-10 border-4 border-white border-t-transparent rounded-full" />
-                                                    ) : (
-                                                        <Video size={40} className="text-white drop-shadow-md" />
-                                                    )}
+
+                                            {show_video_generate && (
+                                                <button
+                                                    className="relative z-10 flex flex-col items-center gap-4 group/btn transition-transform hover:scale-105 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
+                                                    onClick={F_Handle_Generate_Video}
+                                                    disabled={is_generating_video}
+                                                >
+                                                    <div className="p-5 bg-white/10 backdrop-blur-xl rounded-full border border-white/20 shadow-2xl group-hover/btn:bg-white/20 transition-all ring-1 ring-white/10">
+                                                        {is_generating_video ? (
+                                                            <div className="animate-spin w-10 h-10 border-4 border-white border-t-transparent rounded-full" />
+                                                        ) : (
+                                                            <Video size={40} className="text-white drop-shadow-md" />
+                                                        )}
+                                                    </div>
+                                                    <div className="px-6 py-2 bg-black/40 backdrop-blur-md rounded-full border border-white/10 text-white font-bold text-sm tracking-wide shadow-lg uppercase">
+                                                        {is_generating_video ? F_Get_Text('product.generating_video') : F_Get_Text('product.create_video')}
+                                                    </div>
+                                                </button>
+                                            )}
+
+                                            {show_video_processing && (
+                                                <div className="relative z-10 flex flex-col items-center gap-3 text-white">
+                                                    <div className="animate-spin w-10 h-10 border-4 border-white border-t-transparent rounded-full" />
+                                                    <div className="px-5 py-2 bg-black/50 backdrop-blur-md rounded-full border border-white/10 text-sm font-semibold tracking-wide uppercase">
+                                                        {F_Get_Text('product.generating_video')}
+                                                    </div>
                                                 </div>
-                                                <div className="px-6 py-2 bg-black/40 backdrop-blur-md rounded-full border border-white/10 text-white font-bold text-sm tracking-wide shadow-lg uppercase">
-                                                    {is_generating_video ? F_Get_Text('product.generating_video') : F_Get_Text('product.create_video')}
-                                                </div>
-                                            </button>
+                                            )}
                                         </>
                                     )}
                                 </div>
                             ) : (
-                                <img
-                                    key={active_image}
-                                    src={active_image === 'model_front' ? product.model_front : (product.model_back || '')}
-                                    alt="Main View"
-                                    className="w-full h-full object-cover animate-fade-in transition-all duration-500"
-                                />
+                                <div className="relative w-full h-full">
+                                    <img
+                                        key={active_image}
+                                        src={active_image === 'model_front' ? front_src : back_src}
+                                        alt="Main View"
+                                        className={`w-full h-full object-cover animate-fade-in transition-all duration-500 ${
+                                            active_image === 'model_front' && is_front_processing ? 'grayscale blur-md' : ''
+                                        } ${active_image === 'model_back' && is_back_processing ? 'grayscale blur-md' : ''}`}
+                                    />
+                                    {(active_image === 'model_front' && is_front_processing) && (
+                                        <div className="absolute inset-0 flex items-center justify-center bg-black/25">
+                                            <div className="flex flex-col items-center gap-2 text-white">
+                                                <div className="animate-spin w-8 h-8 border-4 border-white border-t-transparent rounded-full" />
+                                                <span className="text-xs font-semibold uppercase tracking-wide">
+                                                    {F_Get_Text('product.status.gen_front')}
+                                                </span>
+                                            </div>
+                                        </div>
+                                    )}
+                                    {(active_image === 'model_back' && is_back_processing) && (
+                                        <div className="absolute inset-0 flex items-center justify-center bg-black/25">
+                                            <div className="flex flex-col items-center gap-2 text-white">
+                                                <div className="animate-spin w-8 h-8 border-4 border-white border-t-transparent rounded-full" />
+                                                <span className="text-xs font-semibold uppercase tracking-wide">
+                                                    {F_Get_Text('product.status.gen_back')}
+                                                </span>
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
                             )}
 
                             {active_image !== 'video' && (
@@ -422,7 +471,11 @@ export const F_Product_Page: React.FC = () => {
                                             : 'border-transparent hover:border-secondary/30'
                                             }`}
                                     >
-                                        <img src={product.model_front} alt="Model Front" className="w-full h-full object-cover" />
+                                        <img
+                                            src={product.model_front}
+                                            alt="Model Front"
+                                            className={`w-full h-full object-cover ${is_front_processing ? 'grayscale blur-sm' : ''}`}
+                                        />
                                     </button>
                                 </div>
                             )}
@@ -436,7 +489,11 @@ export const F_Product_Page: React.FC = () => {
                                             : 'border-transparent hover:border-secondary/30'
                                             }`}
                                     >
-                                        <img src={product.model_back} alt="Model Back" className="w-full h-full object-cover" />
+                                        <img
+                                            src={product.model_back}
+                                            alt="Model Back"
+                                            className={`w-full h-full object-cover ${is_back_processing ? 'grayscale blur-sm' : ''}`}
+                                        />
                                     </button>
                                 </div>
                             )}
@@ -449,7 +506,7 @@ export const F_Product_Page: React.FC = () => {
                                     }`}
                             >
                                 <div
-                                    className={`absolute inset-0 bg-cover bg-center blur-sm scale-110 ${has_video_media ? 'opacity-65' : 'opacity-55 grayscale'} ${video_thumbnail_source ? '' : 'bg-gradient-to-br from-secondary/40 to-secondary/20'}` }
+                                    className={`absolute inset-0 bg-cover bg-center blur-sm scale-110 ${has_video_media ? 'opacity-65' : 'opacity-55 grayscale'} ${video_thumbnail_source ? '' : 'bg-gradient-to-br from-secondary/40 to-secondary/20'} ${is_video_processing ? 'grayscale' : ''}`}
                                     style={video_thumbnail_source ? { backgroundImage: `url(${video_thumbnail_source})` } : undefined}
                                 />
                                 <div className={`absolute inset-0 ${has_video_media ? 'bg-black/10' : 'bg-black/20'}`} />
@@ -573,7 +630,7 @@ export const F_Product_Page: React.FC = () => {
                     p_is_open={is_edit_modal_open}
                     p_on_close={() => set_is_edit_modal_open(false)}
                     p_product={product}
-                    p_on_update={F_Load_Product}
+                    p_on_update={() => F_Load_Product(true)}
                 />
 
                 <F_Confirmation_Modal
