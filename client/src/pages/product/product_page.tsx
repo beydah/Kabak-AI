@@ -10,14 +10,13 @@ import {
     F_Delete_Product_By_Id,
     I_Product_Data,
     F_Save_Product,
-    F_Save_Product_Video_Asset,
     F_Get_Product_Video_Asset,
     F_Get_Product_Video_Link,
     F_Subscribe_To_Updates
 } from '../../utils/storage_utils';
 import { F_Edit_Product_Modal } from '../../components/organisms/edit_product_modal';
 import { F_Confirmation_Modal } from '../../components/molecules/confirmation_modal';
-import { F_Generate_Video_Preview, F_Analyze_Image } from '../../services/gemini_service';
+import { F_Analyze_Image } from '../../services/gemini_service';
 import { F_Download_Multiple_Files, I_Download_Item } from '../../utils/file_utils';
 
 export const F_Product_Page: React.FC = () => {
@@ -181,32 +180,19 @@ export const F_Product_Page: React.FC = () => {
 
     const F_Handle_Generate_Video = async () => {
         if (!product) return;
+        if (is_video_processing) return;
 
         try {
             set_is_generating_video(true);
-            const video_result = await F_Generate_Video_Preview(product);
-
-            if (!video_result) {
-                alert(F_Get_Text('product.video_generation_failed'));
-                return;
-            }
-
-            await F_Save_Product_Video_Asset(
-                product.product_id,
-                video_result.video_blob,
-                video_result.fetch_url || video_result.source_uri
-            );
-
             const updated_product: I_Product_Data = {
                 ...product,
-                model_video: video_result.fetch_url || video_result.source_uri,
-                video_status: 'completed',
+                status: 'running',
+                video_status: 'generating',
                 update_at: Date.now()
             };
 
             await F_Save_Product(updated_product);
             set_product(updated_product);
-            F_Set_Video_URL(video_result.playback_url);
             set_active_image('video');
         } catch (error) {
             console.error('Video Generation Error:', error);
@@ -225,20 +211,58 @@ export const F_Product_Page: React.FC = () => {
         return 'Analyze this generated BACK model image for realism and consistency issues. Find anatomy, alignment, garment-back details and artifact problems. Return concise Turkish bullet-style findings.';
     };
 
+    const F_Build_Retry_Analysis_Prompt = (p_label: 'raw_front' | 'raw_back' | 'gen_front' | 'gen_back' | 'front_ref') => {
+        switch (p_label) {
+            case 'raw_front':
+                return 'Analyze RAW FRONT upload for garment details and constraints to preserve. Return concise Turkish bullet notes.';
+            case 'raw_back':
+                return 'Analyze RAW BACK upload for garment back details and constraints to preserve. Return concise Turkish bullet notes.';
+            case 'gen_front':
+                return 'Analyze GENERATED FRONT image for realism, anatomy, fabric accuracy, background/logo issues. Return concise Turkish bullet fixes.';
+            case 'gen_back':
+                return 'Analyze GENERATED BACK image for realism, anatomy, fabric accuracy, background/logo issues. Return concise Turkish bullet fixes.';
+            case 'front_ref':
+                return 'Analyze GENERATED FRONT image for consistency cues to apply on BACK view (lighting, pose, fit). Return concise Turkish bullet notes.';
+            default:
+                return F_Build_Analysis_Prompt('model_front');
+        }
+    };
+
+    const F_Analyze_With_Label = async (label: string, image?: string, prompt?: string) => {
+        if (!image) return null;
+        const analysis = await F_Analyze_Image(image, prompt || F_Build_Analysis_Prompt('model_front'));
+        return `${label}: ${analysis}`;
+    };
+
     const F_Handle_Image_Fix = async (p_target: 'model_front' | 'model_back') => {
         if (!product || is_retrying) return;
 
         try {
             set_is_retrying(true);
 
-            const source_image = p_target === 'model_front'
-                ? (product.model_front || product.raw_front)
-                : (product.model_back || product.raw_back || product.raw_front);
-
             let analysis_summary: string | undefined;
-            if (source_image) {
-                analysis_summary = await F_Analyze_Image(source_image, F_Build_Analysis_Prompt(p_target));
+            const analysis_parts: (string | null)[] = [];
+
+            if (p_target === 'model_front') {
+                analysis_parts.push(
+                    await F_Analyze_With_Label('RAW FRONT', product.raw_front, F_Build_Retry_Analysis_Prompt('raw_front'))
+                );
+                analysis_parts.push(
+                    await F_Analyze_With_Label('GENERATED FRONT', product.model_front, F_Build_Retry_Analysis_Prompt('gen_front'))
+                );
+            } else {
+                analysis_parts.push(
+                    await F_Analyze_With_Label('RAW BACK', product.raw_back, F_Build_Retry_Analysis_Prompt('raw_back'))
+                );
+                analysis_parts.push(
+                    await F_Analyze_With_Label('GENERATED BACK', product.model_back, F_Build_Retry_Analysis_Prompt('gen_back'))
+                );
+                analysis_parts.push(
+                    await F_Analyze_With_Label('FRONT REFERENCE', product.model_front, F_Build_Retry_Analysis_Prompt('front_ref'))
+                );
             }
+
+            analysis_summary = analysis_parts.filter(Boolean).join('\n');
 
             const updated_product: I_Product_Data = {
                 ...product,
@@ -253,21 +277,20 @@ export const F_Product_Page: React.FC = () => {
             };
 
             if (p_target === 'model_front') {
-                updated_product.front_status = 'pending';
+                updated_product.front_status = 'generating_again';
                 updated_product.back_status = 'pending';
                 if (analysis_summary) updated_product.front_analyse = analysis_summary;
 
                 const has_video = Boolean(product.model_video || video_url);
                 if (has_video) {
-                    updated_product.video_status = 'pending';
+                    updated_product.video_status = 'generating';
                 } else {
-                    updated_product.video_status = 'completed';
+                    updated_product.video_status = updated_product.video_status || 'not_generate';
                 }
 
                 set_active_image('model_front');
             } else {
-                updated_product.back_status = 'pending';
-                updated_product.video_status = 'completed';
+                updated_product.back_status = 'generating_again';
                 if (analysis_summary) updated_product.back_analyse = analysis_summary;
                 set_active_image('model_back');
             }
@@ -308,9 +331,11 @@ export const F_Product_Page: React.FC = () => {
     }
 
     const has_multiple_images = F_Get_Image_Order().length > 1;
-    const is_front_processing = product.front_status === 'pending' || product.front_status === 'updating';
-    const is_back_processing = product.back_status === 'pending' || product.back_status === 'updating';
-    const is_video_processing = product.video_status === 'pending' || product.video_status === 'updating';
+    const is_front_processing = product.front_status === 'pending' || product.front_status === 'updating' || product.front_status === 'generating_again';
+    const is_back_processing = product.back_status === 'pending' || product.back_status === 'updating' || product.back_status === 'generating_again';
+    const is_front_retrying = product.front_status === 'generating_again';
+    const is_back_retrying = product.back_status === 'generating_again';
+    const is_video_processing = product.video_status === 'generating' || product.video_status === 'pending' || product.video_status === 'updating';
 
     const front_src = product.model_front || product.raw_front;
     const back_src = product.model_back || product.raw_back || product.raw_front;
@@ -348,7 +373,7 @@ export const F_Product_Page: React.FC = () => {
                                             controls
                                             autoPlay
                                             loop
-                                            className="w-full h-full object-contain"
+                                            className="w-full h-full object-cover"
                                         />
                                     ) : (
                                         <>
@@ -396,7 +421,9 @@ export const F_Product_Page: React.FC = () => {
                                         alt="Main View"
                                         className={`w-full h-full object-cover animate-fade-in transition-all duration-500 ${
                                             active_image === 'model_front' && is_front_processing ? 'grayscale blur-md' : ''
-                                        } ${active_image === 'model_back' && is_back_processing ? 'grayscale blur-md' : ''}`}
+                                        } ${active_image === 'model_front' && is_front_retrying ? 'animate-breathe' : ''} ${
+                                            active_image === 'model_back' && is_back_processing ? 'grayscale blur-md' : ''
+                                        } ${active_image === 'model_back' && is_back_retrying ? 'animate-breathe' : ''}`}
                                     />
                                     {(active_image === 'model_front' && is_front_processing) && (
                                         <div className="absolute inset-0 flex items-center justify-center bg-black/25">

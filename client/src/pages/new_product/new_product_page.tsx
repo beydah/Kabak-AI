@@ -80,7 +80,8 @@ export const F_New_Product_Page: React.FC = () => {
 
                 raw_desc: p_data.raw_desc || '',
                 status: 'running',
-                retry_count: 0
+                retry_count: 0,
+                video_status: 'not_generate'
             };
 
             // VALIDATION

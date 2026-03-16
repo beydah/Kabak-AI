@@ -31,6 +31,8 @@ export const F_Job_Provider: React.FC<{ children: React.ReactNode }> = ({ childr
 
     const F_Process_Product = async (product: I_Product_Data) => {
         const TIMEOUT_MS = 600000;
+        const F_Is_Video_Busy = (status: I_Product_Data['video_status']) =>
+            status === 'generating' || status === 'pending' || status === 'updating';
 
         const reference_time = product.update_at || product.created_at;
         if (Date.now() - reference_time > TIMEOUT_MS) {
@@ -38,9 +40,9 @@ export const F_Job_Provider: React.FC<{ children: React.ReactNode }> = ({ childr
             product.error_log = 'System Timeout: 10 Minutes';
 
             if (product.seo_status === 'updating' || product.seo_status === 'pending') product.seo_status = 'failed';
-            if (product.front_status === 'updating' || product.front_status === 'pending') product.front_status = 'failed';
-            if (product.back_status === 'updating' || product.back_status === 'pending') product.back_status = 'failed';
-            if (product.video_status === 'updating' || product.video_status === 'pending') product.video_status = 'failed';
+            if (product.front_status === 'updating' || product.front_status === 'pending' || product.front_status === 'generating_again') product.front_status = 'failed';
+            if (product.back_status === 'updating' || product.back_status === 'pending' || product.back_status === 'generating_again') product.back_status = 'failed';
+            if (product.video_status === 'updating' || product.video_status === 'pending' || product.video_status === 'generating') product.video_status = 'error';
 
             await F_Save_Product(product);
             return;
@@ -113,13 +115,18 @@ export const F_Job_Provider: React.FC<{ children: React.ReactNode }> = ({ childr
                 return;
             }
 
-            if (product.front_status === 'pending') {
+            if (product.front_status === 'pending' || product.front_status === 'generating_again') {
                 if (product.seo_status !== 'completed') {
                     return;
                 }
 
-                product.front_status = 'updating';
-                product.error_log = 'Synthesizing High-Fidelity Front View (Pro)...';
+                const is_retry_front = product.front_status === 'generating_again';
+                if (!is_retry_front) {
+                    product.front_status = 'updating';
+                }
+                product.error_log = is_retry_front
+                    ? 'Retrying Front View...'
+                    : 'Synthesizing High-Fidelity Front View (Pro)...';
                 await F_Save_Product(product);
 
                 const { F_Generate_Model_Image } = await import('../../services/gemini_service');
@@ -142,22 +149,27 @@ export const F_Job_Provider: React.FC<{ children: React.ReactNode }> = ({ childr
                 return;
             }
 
-            if (product.back_status === 'pending') {
+            if (product.back_status === 'pending' || product.back_status === 'generating_again') {
                 if (!product.raw_back) {
                     product.back_status = 'completed';
-                    if (product.video_status === 'pending') {
+                    if (product.video_status === 'generating' || product.video_status === 'pending' || product.video_status === 'updating') {
                         product.status = 'running';
                     } else {
                         product.status = 'finished';
-                        if (!product.video_status) product.video_status = 'completed';
+                        if (!product.video_status) product.video_status = 'not_generate';
                     }
                     product.error_log = undefined;
                     await F_Save_Product(product);
                     return;
                 }
 
-                product.back_status = 'updating';
-                product.error_log = 'Synthesizing Consistent Back View...';
+                const is_retry_back = product.back_status === 'generating_again';
+                if (!is_retry_back) {
+                    product.back_status = 'updating';
+                }
+                product.error_log = is_retry_back
+                    ? 'Retrying Back View...'
+                    : 'Synthesizing Consistent Back View...';
                 await F_Save_Product(product);
 
                 const { F_Generate_Back_View } = await import('../../services/gemini_service');
@@ -170,23 +182,23 @@ export const F_Job_Provider: React.FC<{ children: React.ReactNode }> = ({ childr
 
                 product.model_back = back_gen;
                 product.back_status = 'completed';
-                if (product.video_status === 'pending') {
+                if (product.video_status === 'generating' || product.video_status === 'pending' || product.video_status === 'updating') {
                     product.status = 'running';
                 } else {
                     product.status = 'finished';
-                    if (!product.video_status) product.video_status = 'completed';
+                    if (!product.video_status) product.video_status = 'not_generate';
                 }
                 product.error_log = undefined;
                 await F_Save_Product(product);
                 return;
             }
 
-            if (product.video_status === 'pending') {
+            if (F_Is_Video_Busy(product.video_status)) {
                 if (!product.model_front) {
                     return;
                 }
 
-                product.video_status = 'updating';
+                product.video_status = 'generating';
                 product.error_log = 'Generating cinematic video preview...';
                 await F_Save_Product(product);
 
@@ -200,21 +212,22 @@ export const F_Job_Provider: React.FC<{ children: React.ReactNode }> = ({ childr
                 await F_Save_Product_Video_Asset(product.product_id, generated_video.video_blob, generated_video.fetch_url || generated_video.source_uri);
 
                 product.model_video = generated_video.fetch_url || generated_video.source_uri;
-                product.video_status = 'completed';
+                product.video_status = 'generated';
                 product.status = 'finished';
                 product.error_log = undefined;
                 await F_Save_Product(product);
                 return;
             }
 
+            const is_video_busy = F_Is_Video_Busy(product.video_status);
             const is_workflow_done =
                 product.front_status === 'completed' &&
                 product.back_status === 'completed' &&
-                product.video_status !== 'updating';
+                !is_video_busy;
 
             if (product.status === 'running' && is_workflow_done) {
                 product.status = 'finished';
-                if (!product.video_status) product.video_status = 'completed';
+                if (!product.video_status) product.video_status = 'not_generate';
                 product.error_log = undefined;
                 await F_Save_Product(product);
             }
@@ -224,9 +237,9 @@ export const F_Job_Provider: React.FC<{ children: React.ReactNode }> = ({ childr
 
             if (product.analysis_status === 'updating' || product.analysis_status === 'pending') product.analysis_status = 'failed';
             if (product.seo_status === 'updating' || product.seo_status === 'pending') product.seo_status = 'failed';
-            if (product.front_status === 'updating' || product.front_status === 'pending') product.front_status = 'failed';
-            if (product.back_status === 'updating' || product.back_status === 'pending') product.back_status = 'failed';
-            if (product.video_status === 'updating' || product.video_status === 'pending') product.video_status = 'failed';
+            if (product.front_status === 'updating' || product.front_status === 'pending' || product.front_status === 'generating_again') product.front_status = 'failed';
+            if (product.back_status === 'updating' || product.back_status === 'pending' || product.back_status === 'generating_again') product.back_status = 'failed';
+            if (product.video_status === 'updating' || product.video_status === 'pending' || product.video_status === 'generating') product.video_status = 'error';
 
             await F_Save_Product(product);
         }
@@ -264,9 +277,9 @@ export const F_Job_Provider: React.FC<{ children: React.ReactNode }> = ({ childr
                         p.status === 'running' ||
                         p.analysis_status === 'pending' || p.analysis_status === 'updating' ||
                         p.seo_status === 'pending' || p.seo_status === 'updating' ||
-                        p.front_status === 'pending' || p.front_status === 'updating' ||
-                        p.back_status === 'pending' || p.back_status === 'updating' ||
-                        p.video_status === 'pending' || p.video_status === 'updating'
+                        p.front_status === 'pending' || p.front_status === 'updating' || p.front_status === 'generating_again' ||
+                        p.back_status === 'pending' || p.back_status === 'updating' || p.back_status === 'generating_again' ||
+                        p.video_status === 'pending' || p.video_status === 'updating' || p.video_status === 'generating'
                     )
                 ).sort((a, b) => (b.update_at || b.created_at) - (a.update_at || a.created_at));
 

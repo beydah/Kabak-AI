@@ -77,7 +77,7 @@ export const F_Update_Product_Status = async (
     p_seo_status?: 'pending' | 'updating' | 'completed' | 'failed',
     p_front_status?: 'pending' | 'updating' | 'completed' | 'failed',
     p_back_status?: 'pending' | 'updating' | 'completed' | 'failed',
-    p_video_status?: 'pending' | 'updating' | 'completed' | 'failed'
+    p_video_status?: 'not_generate' | 'generating' | 'generated' | 'error' | 'pending' | 'updating' | 'completed' | 'failed'
 ) => {
     if (!p_id || p_id === 'undefined') {
         console.error("[Storage] Update Status aborted: Invalid ID");

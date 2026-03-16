@@ -39,9 +39,9 @@ export interface I_Product_Data {
     // Smart Sync Statuses
     analysis_status?: 'pending' | 'updating' | 'completed' | 'failed'; // New Phase 2
     seo_status?: 'pending' | 'updating' | 'completed' | 'failed';
-    front_status?: 'pending' | 'updating' | 'completed' | 'failed';
-    back_status?: 'pending' | 'updating' | 'completed' | 'failed';
-    video_status?: 'pending' | 'updating' | 'completed' | 'failed';
+    front_status?: 'pending' | 'updating' | 'completed' | 'failed' | 'generating_again';
+    back_status?: 'pending' | 'updating' | 'completed' | 'failed' | 'generating_again';
+    video_status?: 'not_generate' | 'generating' | 'generated' | 'error' | 'pending' | 'updating' | 'completed' | 'failed';
 }
 
 export interface I_Error_Log {
