@@ -98,7 +98,7 @@ export const F_File_Upload: React.FC<File_Upload_Props> = ({ p_label, p_id, p_fi
                     type="file"
                     ref={input_ref}
                     className="hidden"
-                    accept=".jpg,.jpeg,.png,.webp,.tiff,.svg"
+                    accept=".jpg,.jpeg,.png,.webp,.tiff,.svg,.heic,.heif"
                     onChange={F_Handle_Input_Change}
                 />
 

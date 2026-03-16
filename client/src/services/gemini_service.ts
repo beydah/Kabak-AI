@@ -1,9 +1,9 @@
-import { GoogleGenerativeAI } from '@google/generative-ai';
+﻿import { GoogleGenerativeAI } from '@google/generative-ai';
 // @ts-ignore
-import { GoogleGenAI } from "@google/genai";
+import { GoogleGenAI, VideoCompressionQuality } from "@google/genai";
 import { ProductInput, Accessory, BgOption, I_Product_Data } from '../types/interfaces';
 import { ModelService } from './model_service';
-import { F_Build_Imagen_Prompt, F_Get_Negative_Prompt, F_Build_Structured_Prompt } from '../utils/prompt_utils';
+import { F_Build_Imagen_Prompt, F_Get_Negative_Prompt, F_Build_Structured_Prompt, F_Build_Video_Prompt } from '../utils/prompt_utils';
 import { F_Track_Usage } from '../utils/storage_utils';
 
 const DEBUG_AI_LOGS = ((import.meta as any).env?.VITE_DEBUG_AI_LOGS === 'true');
@@ -49,7 +49,10 @@ export class GeminiService {
             let attempt = 0;
             const maxAttempts = 2;
             let currentFeedback = "";
-            let lastImage = "";
+                        let lastImage = "";
+
+            const structuredPrompt = F_Build_Structured_Prompt(input, input.raw_desc, 'front');
+            const negativePrompt = F_Get_Negative_Prompt();
 
             while (attempt < maxAttempts) {
                 attempt++;
@@ -58,32 +61,26 @@ export class GeminiService {
                 const productBase64 = input.frontImage?.replace(/^data:image\/(png|jpeg|webp);base64,/, "");
                 if (!productBase64) throw new Error("Input Image Missing");
 
-                let prompt = `Dress the mannequin with the garment from the provided raw_front_img file.
-                
+                let prompt = `${structuredPrompt}
+
                 MANDATORY CONFIGURATION:
-                - Gender: ${input.gender}
-                - Model Age: ${input.age}
-                - Body Type: ${input.fit}
-                - Product Fit: ${input.productFit}
-                - Background: ${input.backgroundColor}
-                - Accessory: ${input.accessory}
-                - Composition: Full-body shot (boydan Ã§ekim).
+                - Composition: Full-body shot (boydan ÃƒÂ§ekim).
                 - Aspect Ratio: Vertical 3:4 (Portrait).
-                
+
                 CRITICAL OUTFIT LOGIC:
                 - COMPLETE THE LOOK: If the product is a top (shirt, jacket), YOU MUST generate matching bottom wear (pants/skirt) and shoes.
                 - If the product is bottoms, generate a matching top and shoes.
                 - The style should be cohesive and fashionable.
-                
+
                 CRITICAL VISUAL INSTRUCTION:
                 1. The model MUST be a **HYPER-REALISTIC LIVING HUMAN**.
                 2. Skin texture must be natural with pores and imperfections.
                 3. EYES must be focused and lifelike.
                 4. HAIR must be detailed and realistic.
                 5. NO PLASTIC/SHINY SKIN. NO MANNEQUIN JOINTS.
-                
-                NEGATIVE PROMPT: 
-                **PLASTIC MANNEQUIN, ARTIFICIAL SKIN, DOLL, GHOST, HEADLESS, CARTOON, SKETCH, BLURRY FACE, DISTORTED EYES, BAD HANDS, MISSING LIMBS, CROPPED HEAD.**
+
+                NEGATIVE PROMPT:
+                ${negativePrompt}, PLASTIC MANNEQUIN, ARTIFICIAL SKIN, DOLL, GHOST, HEADLESS, CARTOON, SKETCH, BLURRY FACE, DISTORTED EYES, BAD HANDS, MISSING LIMBS, CROPPED HEAD.
                 Do not use standard store mannequins. The result must look like a high-end fashion magazine photo with a real person.`;
 
                 if (currentFeedback) {
@@ -278,6 +275,9 @@ export class GeminiService {
             let currentFeedback = "";
             let lastImage = "";
 
+            const structuredPrompt = F_Build_Structured_Prompt(input, seoContext || input.raw_desc, 'back');
+            const negativePrompt = F_Get_Negative_Prompt();
+
             while (attempt < maxAttempts) {
                 attempt++;
                 F_Debug_Log(`[GeminiService] Back View Attempt ${attempt}...`);
@@ -297,10 +297,15 @@ export class GeminiService {
                  - Image 2: The RAW BACK IMAGE (Reference for product details like cuts, labels, patterns).
                  
                  MANDATORY CONFIGURATION:
-                 - Composition: Full-body shot (boydan Ã§ekim), showing the mannequin from head to toe from the back.
+                 - Composition: Full-body shot (boydan ÃƒÂ§ekim), showing the mannequin from head to toe from the back.
                  - Aspect Ratio: Vertical 3:4 (Portrait).
                  - Consistency: The mannequin, lighting, and background MUST MATCH the Front View exactly.
                  
+                 ${structuredPrompt}
+
+                 NEGATIVE PROMPT:
+                 ${negativePrompt}, PLASTIC MANNEQUIN, ARTIFICIAL SKIN, DOLL, GHOST, HEADLESS, CARTOON, SKETCH, BLURRY FACE, DISTORTED EYES, BAD HANDS, MISSING LIMBS, CROPPED HEAD.
+
                  CRITICAL OUTPUT INSTRUCTION:
                  1. Return ONLY a binary image.
                  2. DO NOT include any text.
@@ -359,7 +364,7 @@ export class GeminiService {
         }, 'models/gemini-3-pro-image-preview');
         } catch (error) {
             F_Debug_Warn('[GeminiService] Back view model failed. Switching to fallback model...', error);
-            const fallbackPrompt = F_Build_Structured_Prompt(input, input.raw_desc, 'back');
+            const fallbackPrompt = F_Build_Structured_Prompt(input, seoContext || input.raw_desc, 'back');
             return await this.modelService.executeWithFailover('image', async () => {
                 return this.generateImagen(fallbackPrompt);
             }, 'models/imagen-4.0-fast-generate-001');
@@ -380,7 +385,7 @@ export class GeminiService {
 
         F_Debug_Log("[GeminiService] Video Generation Image Data Length:", cleanBase64.length);
 
-        const textPrompt = 'High-end fashion commercial featuring the model from the image. FRONT VIEW ONLY. The model should slowly move or pose while facing forward. Fabric texture showcase. Cinematic lighting. DO NOT SHOW THE BACK SIDE. Focus on the front design.';
+        const textPrompt = F_Build_Video_Prompt(input);
 
         try {
             const productImage = {
@@ -396,6 +401,9 @@ export class GeminiService {
                 image: productImage,
                 config: {
                     aspectRatio: '9:16',
+                    resolution: '1080p',
+                    compressionQuality: VideoCompressionQuality.LOSSLESS,
+                    generateAudio: false,
                 },
             });
 
@@ -576,7 +584,18 @@ export const F_Generate_Model_Image = async (p_product: I_Product_Data): Promise
 
 export const F_Generate_Video_Preview = async (p_product: I_Product_Data): Promise<I_Generated_Video_Result | null> => {
     const service = GeminiService.getInstance();
-    return await service.generateVideo({} as any, p_product.model_front || p_product.raw_front);
+    const input: ProductInput = {
+        gender: p_product.gender ? 'Kadın' : 'Erkek',
+        age: p_product.age || '30',
+        fit: p_product.vücut_tipi || 'Standart',
+        productFit: p_product.kesim || 'Normal',
+        backgroundColor: (p_product.background as BgOption) || BgOption.STUDIO,
+        accessory: (p_product.aksesuar as Accessory) || Accessory.NONE,
+        raw_desc: p_product.raw_desc,
+        frontImage: p_product.model_front || p_product.raw_front,
+        backImage: p_product.raw_back || ''
+    };
+    return await service.generateVideo(input, p_product.model_front || p_product.raw_front);
 };
 
 export const F_Analyze_Image = async (image: string, prompt: string): Promise<string> => {
@@ -604,6 +623,11 @@ export const F_Generate_Back_View = async (p_product: I_Product_Data, front_view
     };
     return await service.generateBackView(input, front_view);
 };
+
+
+
+
+
 
 
 
