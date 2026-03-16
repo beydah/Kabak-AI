@@ -18,6 +18,7 @@ export const F_Job_Provider: React.FC<{ children: React.ReactNode }> = ({ childr
     const [error_logs, set_error_logs] = useState<I_Error_Log[]>([]);
     const processing_jobs_ref = useRef<Set<string>>(new Set());
     const is_tick_running_ref = useRef(false);
+    const MAX_CONCURRENT_JOBS = 2;
 
     const refresh_logs = async () => {
         set_error_logs(await F_Get_Error_Logs());
@@ -31,7 +32,8 @@ export const F_Job_Provider: React.FC<{ children: React.ReactNode }> = ({ childr
     const F_Process_Product = async (product: I_Product_Data) => {
         const TIMEOUT_MS = 600000;
 
-        if (Date.now() - product.created_at > TIMEOUT_MS) {
+        const reference_time = product.update_at || product.created_at;
+        if (Date.now() - reference_time > TIMEOUT_MS) {
             product.status = 'exited';
             product.error_log = 'System Timeout: 10 Minutes';
 
@@ -234,6 +236,19 @@ export const F_Job_Provider: React.FC<{ children: React.ReactNode }> = ({ childr
         refresh_logs();
         let is_mounted = true;
 
+        const F_Run_Job = async (product: I_Product_Data) => {
+            if (processing_jobs_ref.current.has(product.product_id)) {
+                return;
+            }
+
+            processing_jobs_ref.current.add(product.product_id);
+            try {
+                await F_Process_Product(product);
+            } finally {
+                processing_jobs_ref.current.delete(product.product_id);
+            }
+        };
+
         const tick = async () => {
             if (!is_mounted || is_tick_running_ref.current) {
                 return;
@@ -253,19 +268,16 @@ export const F_Job_Provider: React.FC<{ children: React.ReactNode }> = ({ childr
                         p.back_status === 'pending' || p.back_status === 'updating' ||
                         p.video_status === 'pending' || p.video_status === 'updating'
                     )
-                );
+                ).sort((a, b) => (b.update_at || b.created_at) - (a.update_at || a.created_at));
 
                 for (const product of active_products) {
+                    if (processing_jobs_ref.current.size >= MAX_CONCURRENT_JOBS) {
+                        break;
+                    }
                     if (processing_jobs_ref.current.has(product.product_id)) {
                         continue;
                     }
-
-                    processing_jobs_ref.current.add(product.product_id);
-                    try {
-                        await F_Process_Product(product);
-                    } finally {
-                        processing_jobs_ref.current.delete(product.product_id);
-                    }
+                    void F_Run_Job(product);
                 }
             } finally {
                 is_tick_running_ref.current = false;

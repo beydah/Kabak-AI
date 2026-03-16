@@ -1,6 +1,6 @@
 ﻿import { GoogleGenerativeAI } from '@google/generative-ai';
 // @ts-ignore
-import { GoogleGenAI, VideoCompressionQuality } from "@google/genai";
+import { GoogleGenAI } from "@google/genai";
 import { ProductInput, Accessory, BgOption, I_Product_Data } from '../types/interfaces';
 import { ModelService } from './model_service';
 import { F_Build_Imagen_Prompt, F_Get_Negative_Prompt, F_Build_Structured_Prompt, F_Build_Video_Prompt } from '../utils/prompt_utils';
@@ -402,7 +402,6 @@ export class GeminiService {
                 config: {
                     aspectRatio: '9:16',
                     resolution: '1080p',
-                    compressionQuality: VideoCompressionQuality.LOSSLESS,
                 },
             });
 
