@@ -5,38 +5,38 @@
 [![Issues](https://img.shields.io/github/issues/beydah/Kabak-AI)](https://github.com/beydah/Kabak-AI/issues)
 [![Stars](https://img.shields.io/github/stars/beydah/Kabak-AI)](https://github.com/beydah/Kabak-AI/stargazers)
 
-AI-assisted fashion content workflow for e-commerce teams. Kabak AI converts raw product photos into SEO-ready copy, AI model visuals, and short video previews using a local-first UI and IndexedDB storage.
+Kabak AI is a local-first, AI-powered fashion visualization workflow. It turns raw product photos into SEO-ready copy, model-on-mannequin visuals (front/back), and optional video previews using modern GenAI models.
 
 ## Table of Contents
 - Overview
-- Features
+- Highlights
 - Tech Stack
 - Quickstart
-- Environment
+- Environment Variables
 - Scripts
 - Deployment (Netlify)
+- Docs
 - Security
 - Contributing
 - License
 
 ## Overview
-Kabak AI helps teams turn raw product imagery into consistent, on-brand visuals and content. It includes a landing page for model usage and pricing visibility, and a collection workflow for product generation and review.
+Kabak AI helps e-commerce teams generate consistent, on-brand visuals and content from raw product imagery. The app includes a public landing page for model usage and pricing visibility, plus an authenticated collection workflow for product generation and review.
 
-## Features
-- Local-first storage with IndexedDB for product data and media
-- AI image generation for front and back views
-- AI video preview generation per product
-- Usage analytics for requests and estimated costs
+## Highlights
+- Local-first storage using IndexedDB with safe localStorage fallback
+- Multi-step AI pipeline: analysis -> SEO -> front/back generation -> optional video
+- Regeneration workflow with pending/blur UI and real-time updates
 - TR/EN localization
-- Tailwind-based responsive UI
+- Landing page with live model usage and cost simulation
+- iOS-friendly image normalization (HEIC/HEIF -> JPEG)
 
 ## Tech Stack
-- React 18
-- Vite 7
-- Tailwind CSS 3
+- React 18 + Vite 7
 - TypeScript
-- Express (server entry)
-- Google GenAI SDKs
+- Tailwind CSS
+- Express (optional server entry)
+- Google GenAI SDKs (Gemini, Imagen, Veo)
 
 ## Quickstart
 1. Install dependencies.
@@ -47,31 +47,41 @@ npm install
 ```bash
 copy .env.example .env
 ```
-3. Start the dev server.
+3. Start the client dev server.
 ```bash
 npm run dev
 ```
 4. Open `http://localhost:3000`.
 
-## Environment
+## Environment Variables
 Required:
-- `VITE_GEMINI_API_KEY`
+- `VITE_GEMINI_API_KEY` - Google Gemini API key for text, image, and video flows.
 
 Optional:
-- `VITE_USERNAME`
-- `VITE_PASSWORD`
+- `VITE_USERNAME` - basic auth username for the app.
+- `VITE_PASSWORD` - basic auth password for the app.
+- `VITE_EXCHANGE_RATE_API_KEY` - USD/TRY conversion in pricing widgets.
 
 ## Scripts
-- `npm run dev`
-- `npm run build:client`
-- `npm run preview:client`
-- `npm run dev:server`
-- `npm run typecheck`
-- `npm run check`
+- `npm run dev` - start client dev server
+- `npm run build:client` - build client bundle
+- `npm run preview:client` - preview client build
+- `npm run dev:server` - start server entry (optional)
+- `npm run typecheck` - run TypeScript checks
+- `npm run check` - typecheck + client build
 
-## Deployment (Netlify)\n
-etlify.toml is configured for SPA deployment.\n- Build command: 
-pm run build:client\n- Publish directory: client/dist\n\n## Testing\nSee docs/TESTING.md for recent test runs.\n\n## Security
+## Deployment (Netlify)
+- Build command: `npm run build:client`
+- Publish directory: `client/dist`
+- Required env vars: `VITE_GEMINI_API_KEY`
+
+## Docs
+- `docs/CONTRIBUTING.md`
+- `docs/SECURITY.md`
+- `docs/TESTING.md`
+- `docs/MODELS.md`
+
+## Security
 See `docs/SECURITY.md`.
 
 ## Contributing
