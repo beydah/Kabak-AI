@@ -70,9 +70,9 @@ export const F_Edit_Product_Modal: React.FC<Edit_Product_Modal_Props> = ({
 
                 const should_regenerate_video = diff.needsVideo && had_video;
                 if (should_regenerate_video) {
-                    updated_product.video_status = 'pending';
+                    updated_product.video_status = 'generating';
                 } else if (updated_product.video_status !== 'completed') {
-                    updated_product.video_status = 'completed';
+                    updated_product.video_status = updated_product.video_status || 'not_generate';
                 }
             }
 

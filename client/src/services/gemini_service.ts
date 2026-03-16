@@ -51,7 +51,7 @@ export class GeminiService {
             let currentFeedback = "";
                         let lastImage = "";
 
-            const structuredPrompt = F_Build_Structured_Prompt(input, input.raw_desc, 'front');
+            const structuredPrompt = F_Build_Structured_Prompt(input, input.seo_context || input.raw_desc, 'front');
             const negativePrompt = F_Get_Negative_Prompt();
 
             while (attempt < maxAttempts) {
@@ -158,7 +158,7 @@ export class GeminiService {
         }, 'models/gemini-3-pro-image-preview');
         } catch (error) {
             F_Debug_Warn('[GeminiService] Primary image model failed. Switching to fallback model...', error);
-            const fallbackPrompt = F_Build_Imagen_Prompt(input, input.raw_desc);
+            const fallbackPrompt = F_Build_Imagen_Prompt(input, input.seo_context || input.raw_desc);
             return await this.modelService.executeWithFailover('image', async () => {
                 return this.generateImagen(fallbackPrompt);
             }, 'models/imagen-4.0-fast-generate-001');
@@ -566,6 +566,10 @@ export const F_Generate_SEO_Content = async (p_product: I_Product_Data, lang: 't
 
 export const F_Generate_Model_Image = async (p_product: I_Product_Data): Promise<string | null> => {
     const service = GeminiService.getInstance();
+    const retry_context = p_product.front_status === 'generating_again' && p_product.front_analyse
+        ? `Retry notes: ${p_product.front_analyse}`
+        : '';
+    const seo_context = retry_context ? `${p_product.raw_desc}. ${retry_context}` : p_product.raw_desc;
     const input: ProductInput = {
         gender: p_product.gender ? 'Kadın' : 'Erkek',
         age: p_product.age || '30',
@@ -575,7 +579,8 @@ export const F_Generate_Model_Image = async (p_product: I_Product_Data): Promise
         accessory: (p_product.aksesuar as Accessory) || Accessory.NONE,
         raw_desc: p_product.raw_desc,
         frontImage: p_product.raw_front,
-        backImage: p_product.raw_back || ''
+        backImage: p_product.raw_back || '',
+        seo_context
     };
     return await service.generateProductOnModel(input);
 };
@@ -608,6 +613,10 @@ export const F_Generate_Pro_Image = async (prompt: string, front: string, back?:
 
 export const F_Generate_Back_View = async (p_product: I_Product_Data, front_view: string): Promise<string> => {
     const service = GeminiService.getInstance();
+    const retry_context = p_product.back_status === 'generating_again' && p_product.back_analyse
+        ? `Retry notes: ${p_product.back_analyse}`
+        : '';
+    const seo_context = retry_context ? `${p_product.raw_desc}. ${retry_context}` : p_product.raw_desc;
     const input: ProductInput = {
         gender: p_product.gender ? 'Kadın' : 'Erkek',
         age: p_product.age || '30',
@@ -617,9 +626,10 @@ export const F_Generate_Back_View = async (p_product: I_Product_Data, front_view
         accessory: (p_product.aksesuar as Accessory) || Accessory.NONE,
         raw_desc: p_product.raw_desc,
         frontImage: p_product.raw_front,
-        backImage: p_product.raw_back || ''
+        backImage: p_product.raw_back || '',
+        seo_context
     };
-    return await service.generateBackView(input, front_view);
+    return await service.generateBackView(input, front_view, seo_context);
 };
 
 
