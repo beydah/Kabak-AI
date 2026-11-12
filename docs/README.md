@@ -47,15 +47,15 @@ npm install
 ```bash
 copy .env.example .env
 ```
-3. Start the client dev server.
+3. Start the app with Netlify CLI so local requests reach the server-side function.
 ```bash
-npm run dev
+npx netlify-cli dev
 ```
 4. Open `http://localhost:3000`.
 
 ## Environment Variables
-Required:
-- `VITE_GEMINI_API_KEY` - Google Gemini API key for text, image, and video flows.
+Required on the server only:
+- `GEMINI_API_KEY` - Google Gemini API key used by the Netlify function proxy. Do not prefix it with `VITE_`.
 
 Optional:
 - `VITE_USERNAME` - basic auth username for the app.
@@ -64,6 +64,7 @@ Optional:
 
 ## Scripts
 - `npm run dev` - start client dev server
+- `npx netlify-cli dev` - run Vite and Netlify Functions together for local AI flows
 - `npm run build:client` - build client bundle
 - `npm run preview:client` - preview client build
 - `npm run dev:server` - start server entry (optional)
@@ -73,7 +74,9 @@ Optional:
 ## Deployment (Netlify)
 - Build command: `npm run build:client`
 - Publish directory: `client/dist`
-- Required env vars: `VITE_GEMINI_API_KEY`
+- Functions directory: `netlify/functions` (Netlify default)
+- Required server env var: `GEMINI_API_KEY`
+- AI image inputs are bounded to the Netlify function request limit; streamed video downloads are limited to 20 MB.
 
 ## Docs
 - `docs/CONTRIBUTING.md`

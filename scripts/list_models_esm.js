@@ -11,7 +11,7 @@ const envPath = path.resolve(__dirname, '../client/.env');
 console.log("Loading .env from:", envPath);
 dotenv.config({ path: envPath });
 
-const key = process.env.VITE_GEMINI_API_KEY;
+const key = process.env.GEMINI_API_KEY;
 
 if (!key) {
     console.error("No API Key found in client/.env");

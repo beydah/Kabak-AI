@@ -18,7 +18,7 @@ function loadEnv() {
     } catch (e) { return {}; }
 }
 
-const apiKey = loadEnv().VITE_GEMINI_API_KEY;
+const apiKey = loadEnv().GEMINI_API_KEY;
 if (!apiKey) process.exit(1);
 
 async function findImageModels() {

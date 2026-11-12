@@ -20,7 +20,7 @@ function loadEnv() {
 }
 
 const env = loadEnv();
-const apiKey = env.VITE_GEMINI_API_KEY;
+const apiKey = env.GEMINI_API_KEY;
 
 if (!apiKey) {
     console.error("No API Key found in .env");
