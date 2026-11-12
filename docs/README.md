@@ -14,7 +14,7 @@ Kabak AI is a local-first, AI-powered fashion visualization workflow. It turns r
 - Quickstart
 - Environment Variables
 - Scripts
-- Deployment (Netlify)
+- Deployment (Vercel)
 - Docs
 - Security
 - Contributing
@@ -32,7 +32,7 @@ Kabak AI helps e-commerce teams generate consistent, on-brand visuals and conten
 - iOS-friendly image normalization (HEIC/HEIF -> JPEG)
 
 ## Tech Stack
-- React 18 + Vite 7
+- React 18 + Vite 8
 - TypeScript
 - Tailwind CSS
 - Express (optional server entry)
@@ -47,15 +47,16 @@ npm install
 ```bash
 copy .env.example .env
 ```
-3. Start the app with Netlify CLI so local requests reach the server-side function.
+3. Start the Vercel development server so local requests reach the serverless function.
 ```bash
-npx netlify-cli dev
+npx vercel dev
 ```
-4. Open `http://localhost:3000`.
+4. Open the URL shown by Vercel CLI.
 
 ## Environment Variables
 Required on the server only:
-- `GEMINI_API_KEY` - Google Gemini API key used by the Netlify function proxy. Do not prefix it with `VITE_`.
+- `GEMINI_API_KEY` - Google Gemini API key used by the Vercel function proxy. Add it in Vercel when you are ready to enable AI requests. Do not prefix it with `VITE_`.
+- Vercel Blob - a private Blob store is required for generated image and video media. Connect the store to the Vercel project; Vercel manages its credentials.
 
 Optional:
 - `VITE_USERNAME` - basic auth username for the app.
@@ -64,25 +65,28 @@ Optional:
 
 ## Scripts
 - `npm run dev` - start client dev server
-- `npx netlify-cli dev` - run Vite and Netlify Functions together for local AI flows
+- `npx vercel dev` - run Vite and Vercel Functions together for local AI flows
 - `npm run build:client` - build client bundle
 - `npm run preview:client` - preview client build
 - `npm run dev:server` - start server entry (optional)
 - `npm run typecheck` - run TypeScript checks
 - `npm run check` - typecheck + client build
 
-## Deployment (Netlify)
+## Deployment (Vercel)
 - Build command: `npm run build:client`
 - Publish directory: `client/dist`
-- Functions directory: `netlify/functions` (Netlify default)
-- Required server env var: `GEMINI_API_KEY`
-- AI image inputs are bounded to the Netlify function request limit; streamed video downloads are limited to 20 MB.
+- Function: `api/gemini.js` (Node.js; maximum duration 60 seconds)
+- Required server env var: `GEMINI_API_KEY` (not configured yet)
+- Connect a private Vercel Blob store for generated media. The API returns short-lived signed media links; the browser fetches media directly from Blob storage, then requests deletion.
+- Function JSON requests are capped below Vercel's 4.5 MB payload limit. Video files are capped at 20 MB, streamed from the provider to private Blob storage, and never returned as function response bodies.
+- `vercel.json` rewrites client-side routes to the Vite application entrypoint.
 
 ## Docs
 - `docs/CONTRIBUTING.md`
 - `docs/SECURITY.md`
 - `docs/TESTING.md`
 - `docs/MODELS.md`
+- `docs/TESTING.md`
 
 ## Security
 See `docs/SECURITY.md`.
