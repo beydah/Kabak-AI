@@ -5,7 +5,7 @@ import path from 'path';
 // Load ENV
 dotenv.config({ path: path.resolve(__dirname, '../../.env') });
 
-const apiKey = process.env.VITE_GEMINI_API_KEY;
+const apiKey = process.env.GEMINI_API_KEY;
 if (!apiKey) {
     console.error("No API Key found");
     process.exit(1);

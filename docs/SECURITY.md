@@ -22,6 +22,7 @@ Do not disclose vulnerabilities publicly before a fix is available.
 
 ## Security Baselines
 - Keep dependencies updated
-- Store secrets in environment variables
+- Store `GEMINI_API_KEY` as a server-side Netlify environment variable; never use a `VITE_` prefix for it
+- Route all Gemini text, image, and video operations through `netlify/functions/gemini.js`
 - Validate file uploads and user input
 - Restrict API keys and rotate when needed

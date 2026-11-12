@@ -1,6 +1,3 @@
-﻿import { GoogleGenerativeAI } from '@google/generative-ai';
-// @ts-ignore
-import { GoogleGenAI } from "@google/genai";
 import { ProductInput, Accessory, BgOption, I_Product_Data } from '../types/interfaces';
 import { ModelService } from './model_service';
 import { F_Build_Imagen_Prompt, F_Get_Negative_Prompt, F_Build_Structured_Prompt, F_Build_Video_Prompt } from '../utils/prompt_utils';
@@ -21,15 +18,9 @@ export type I_Generated_Video_Result = {
 };
 
 export class GeminiService {
-    private ai: GoogleGenerativeAI;
-    private apiKey: string;
     private modelService: ModelService;
 
     constructor() {
-        this.apiKey = (import.meta as any).env.VITE_GEMINI_API_KEY || '';
-        if (!this.apiKey) console.error("FATAL: VITE_GEMINI_API_KEY is missing!");
-
-        this.ai = new GoogleGenerativeAI(this.apiKey);
         this.modelService = ModelService.getInstance();
 
         F_Debug_Log("[GeminiService] Initialized (Strict Gemini 2.0 Flash Mode)");
@@ -40,6 +31,33 @@ export class GeminiService {
             instance = new GeminiService();
         }
         return instance;
+    }
+
+    private async F_Call_Gemini_Proxy(p_operation: string, p_payload: Record<string, unknown>) {
+        const response = await fetch('/api/gemini', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ operation: p_operation, ...p_payload }),
+        });
+        const result = await response.json().catch(() => ({}));
+        if (!response.ok) {
+            throw new Error(result.error || `Gemini proxy request failed (${response.status})`);
+        }
+        return result;
+    }
+
+    private async F_Generate_Content(p_model: string, p_contents: any, p_generation_config?: Record<string, unknown>) {
+        const result = await this.F_Call_Gemini_Proxy('generateContent', {
+            model: p_model,
+            contents: p_contents,
+            generationConfig: p_generation_config,
+        });
+        return {
+            response: {
+                candidates: result.candidates || [],
+                text: () => result.text || '',
+            },
+        };
     }
 
     // --- GÃ–REV 1 & 2: GÃ–RSEL ÃœRETÄ°M (Gemini 3 Pro Image Preview) ---
@@ -89,7 +107,6 @@ export class GeminiService {
                     YOU MUST FIX THIS. Ensure the model is a REAL HUMAN.`;
                 }
 
-                const genModel = this.ai.getGenerativeModel({ model: 'models/gemini-3-pro-image-preview' });
 
                 // Prepare inputs (Standard or Retry with Feedback)
                 // For retry, we still use the original raw image as source, but with new prompt 
@@ -105,7 +122,7 @@ export class GeminiService {
                 // Let's stick to Raw Input + Stronger Prompt for stability first.
                 inputParts.push({ inlineData: { data: productBase64, mimeType: 'image/jpeg' } });
 
-                const result = await genModel.generateContent(inputParts);
+                const result = await this.F_Generate_Content('models/gemini-3-pro-image-preview', inputParts);
                 const response = await result.response;
 
                 let generatedBase64 = "";
@@ -169,10 +186,6 @@ export class GeminiService {
     private async checkImageQuality(imageBase64: string): Promise<{ pass: boolean, reason?: string }> {
         try {
             const cleanBase64 = imageBase64.replace(/^data:image\/(png|jpeg|webp);base64,/, "");
-            const model = this.ai.getGenerativeModel({
-                model: 'gemini-2.0-flash',
-                generationConfig: { responseMimeType: "application/json" }
-            });
 
             const prompt = `Analyze this fashion image strictly.
             1. Is the model a PHOTOREALISTIC REAL HUMAN? (Plastic mannequins, cartoons, sketches, headless bodies = FAIL).
@@ -187,10 +200,10 @@ export class GeminiService {
               "reason": "Short explanation of failure if pass is false"
             }`;
 
-            const result = await model.generateContent([
+            const result = await this.F_Generate_Content('gemini-2.0-flash', [
                 { text: prompt },
                 { inlineData: { data: cleanBase64, mimeType: 'image/jpeg' } }
-            ]);
+            ], { responseMimeType: "application/json" });
 
             const response = JSON.parse(result.response.text());
             return {
@@ -207,11 +220,6 @@ export class GeminiService {
     // --- GÃ–REV 3, 4 & 5: AKILLI SEO VE METÄ°N ÃœRETÄ°MÄ° (REVISED) ---
     async generateSEOContent(input: ProductInput, lang: string = 'tr'): Promise<{ title: string; description: string }> {
         return this.modelService.executeWithFailover('text', async () => {
-            const genModel = this.ai.getGenerativeModel({
-                model: 'gemini-2.5-flash', // Updated to 2.5 Flash as requested
-                generationConfig: { responseMimeType: "application/json" }
-            });
-
             const rawDesc = input.seo_context || "";
 
             // SMART EXTRACTION: Catch more patterns for Brand, Size, Defects
@@ -257,7 +265,7 @@ export class GeminiService {
             OUTPUT LANGUAGE: ${lang === 'tr' ? 'TÃ¼rkÃ§e' : 'English'}
             OUTPUT JSON: {"title": "...", "description": "..."}`;
 
-            const result = await genModel.generateContent(prompt);
+            const result = await this.F_Generate_Content('gemini-2.5-flash', prompt, { responseMimeType: "application/json" });
             return JSON.parse(result.response.text());
         }, 'gemini-2.5-flash'); // Explicitly track usage for SEO
     }
@@ -288,7 +296,6 @@ export class GeminiService {
 
                 if (!frontBase64) throw new Error("Missing Front Generated Image for reference");
 
-                const genModel = this.ai.getGenerativeModel({ model: modelName });
 
                 let prompt = `Generate a high-fidelity studio photograph of the BACK VIEW of the mannequin/product.
                  
@@ -321,7 +328,7 @@ export class GeminiService {
                 parts.push({ inlineData: { data: frontBase64, mimeType: 'image/jpeg' } });
                 if (backBase64) parts.push({ inlineData: { data: backBase64, mimeType: 'image/jpeg' } });
 
-                const result = await genModel.generateContent(parts);
+                const result = await this.F_Generate_Content(modelName, parts);
                 const response = await result.response;
 
                 let generatedBase64 = "";
@@ -373,94 +380,48 @@ export class GeminiService {
 
     // --- VIDEO (Veo 3.1 Preview) ---
     async generateVideo(input: ProductInput, imageBase64: string): Promise<I_Generated_Video_Result> {
-        F_Debug_Log("[GeminiService] Generating Video with Veo 3.1 (New SDK)...");
-
-        // @ts-ignore
-        const ai = new GoogleGenAI({ apiKey: this.apiKey });
+        F_Debug_Log("[GeminiService] Generating Video with Veo 3.1 via server proxy...");
 
         const cleanBase64 = imageBase64.includes(',') ? imageBase64.split(',')[1] : imageBase64;
         if (!cleanBase64 || cleanBase64.length < 100) {
             throw new Error("Input image is invalid or too short.");
         }
 
-        F_Debug_Log("[GeminiService] Video Generation Image Data Length:", cleanBase64.length);
-
         const textPrompt = F_Build_Video_Prompt(input);
-
         try {
-            const productImage = {
+            let operation = await this.F_Call_Gemini_Proxy('videoStart', {
+                prompt: textPrompt,
                 imageBytes: cleanBase64,
                 mimeType: 'image/jpeg',
-            };
-
-            let operation = await ai.models.generateVideos({
-                model: 'veo-3.1-generate-preview',
-                // @ts-ignore
-                prompt: textPrompt,
-                // @ts-ignore
-                image: productImage,
-                config: {
-                    aspectRatio: '9:16',
-                    resolution: '1080p',
-                },
             });
+            if (!operation.operationName) throw new Error('Video generation did not return an operation.');
 
-            F_Debug_Log('Waiting for video generation to complete...');
             while (operation.done !== true) {
                 await new Promise((resolve) => setTimeout(resolve, 10000));
-                // @ts-ignore
-                operation = await ai.operations.getVideosOperation({ operation });
-                F_Debug_Log('Polling... Full Operation:', JSON.stringify(operation, null, 2));
+                operation = await this.F_Call_Gemini_Proxy('videoPoll', {
+                    operationName: operation.operationName,
+                });
+                if (operation.error) throw new Error('Video generation failed.');
             }
 
-            // @ts-ignore
-            if (operation.response?.raiMediaFilteredReasons) {
-                // @ts-ignore
-                const reasons = operation.response.raiMediaFilteredReasons.join(', ');
-                throw new Error(`Video generation blocked by safety filters: ${reasons}`);
+            if (operation.raiMediaFilteredReasons?.length) {
+                throw new Error(`Video generation blocked by safety filters: ${operation.raiMediaFilteredReasons.join(', ')}`);
+            }
+            if (!operation.uri) throw new Error('Video generation completed but no URI was returned.');
+
+            const fetch_url = `/api/gemini?videoUri=${encodeURIComponent(operation.uri)}`;
+            const response = await fetch(fetch_url);
+            if (!response.ok) {
+                throw new Error(`Video download failed (${response.status}).`);
             }
 
-            // @ts-ignore
-            const uri = operation.response?.generatedVideos?.[0]?.video?.uri || operation.result?.response?.generatedVideos?.[0]?.video?.uri;
-            if (!uri) {
-                throw new Error('Video generation completed but no URI was returned.');
-            }
-
-            F_Debug_Log('[GeminiService] Fetching video blob from URI:', uri);
-            const fetchUrl = uri.includes('key=')
-                ? uri
-                : `${uri}${uri.includes('?') ? '&' : '?'}key=${this.apiKey}`;
-
-            const res = await fetch(fetchUrl, { method: 'GET' });
-            F_Debug_Log('[GeminiService] Video Fetch Status:', res.status, res.statusText);
-
-            if (!res.ok) {
-                const errorText = await res.text();
-                console.error('Video Fetch Error Body:', errorText);
-
-                if (res.status === 403) {
-                    const activationUrlMatch = errorText.match(/https?:\/\/[^\s"']+/);
-                    if (activationUrlMatch) {
-                        throw new Error(`Generative Language API is disabled for this project. Enable it: ${activationUrlMatch[0]}`);
-                    }
-                    throw new Error('Video fetch was denied (403). Check API enablement, key restrictions, and billing.');
-                }
-
-                throw new Error(`Failed to fetch video blob: ${res.status} ${res.statusText}`);
-            }
-
-            const contentType = res.headers.get('content-type');
-            if (contentType && !contentType.startsWith('video/') && !contentType.startsWith('application/octet-stream')) {
-                F_Debug_Warn(`Unexpected Content-Type: ${contentType}. Continuing anyway.`);
-            }
-
-            const blob = await res.blob();
+            const blob = await response.blob();
             F_Track_Usage('veo-3.1-generate-preview', 0.05).catch(() => undefined);
             return {
                 playback_url: URL.createObjectURL(blob),
-                source_uri: uri,
-                fetch_url: fetchUrl,
-                video_blob: blob
+                source_uri: operation.operationName,
+                fetch_url,
+                video_blob: blob,
             };
         } catch (error) {
             console.error('Veo 3.1 Failed:', error);
@@ -474,10 +435,9 @@ export class GeminiService {
             // Flash is perfect for analysis
             const modelName = 'gemini-2.0-flash';
             F_Debug_Log(`[GeminiService] ANALYZING with ${modelName}...`);
-            const genModel = this.ai.getGenerativeModel({ model: modelName });
             const cleanBase64 = imageBase64.replace(/^data:image\/(png|jpeg|webp);base64,/, "");
 
-            const result = await genModel.generateContent([
+            const result = await this.F_Generate_Content(modelName, [
                 { text: prompt },
                 { inlineData: { data: cleanBase64, mimeType: 'image/jpeg' } }
             ]);
@@ -488,45 +448,8 @@ export class GeminiService {
     // --- HELPERS ---
     private async generateImagen(prompt: string): Promise<string> {
         // Updated to Imagen 4.0 Fast based on available models list
-        const modelName = 'imagen-4.0-fast-generate-001';
-        const url = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:predict?key=${this.apiKey}`;
-
-        F_Debug_Log(`[GeminiService] Calling Imagen 4 (${modelName}) via REST...`);
-
-        const payload = {
-            instances: [{ prompt: prompt }],
-            parameters: {
-                sampleCount: 1,
-                aspectRatio: "3:4",
-                personGeneration: "allow_adult"
-            }
-        };
-
-        try {
-            const response = await fetch(url, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(payload)
-            });
-
-            if (!response.ok) {
-                const errText = await response.text();
-                throw new Error(`Imagen 4 HTTP ${response.status}: ${errText}`);
-            }
-
-            const data = await response.json();
-
-            // Imagen response parsing
-            if (data.predictions && data.predictions[0] && data.predictions[0].bytesBase64Encoded) {
-                return `data:image/jpeg;base64,${data.predictions[0].bytesBase64Encoded}`;
-            }
-
-            throw new Error(`Imagen 4 No Image Data: ${JSON.stringify(data).slice(0, 100)}...`);
-
-        } catch (e) {
-            console.error("[GeminiService] Imagen 4 Failed:", e);
-            throw e;
-        }
+        const result = await this.F_Call_Gemini_Proxy('generateImagen', { prompt });
+        return result.data_url;
     }
 
     // Phase 4/5: Pro Image Generation (Hybrid: Flash Logic -> Imagen 4 Pixels)

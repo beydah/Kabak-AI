@@ -8,10 +8,10 @@ import path from 'path';
 const envPath = path.resolve(process.cwd(), '.env');
 dotenv.config({ path: envPath });
 
-const apiKey = process.env.VITE_GEMINI_API_KEY;
+const apiKey = process.env.GEMINI_API_KEY;
 
 if (!apiKey) {
-    console.error("❌ No API Key found in .env (Checked VITE_GEMINI_API_KEY)");
+    console.error("❌ No API Key found in .env (Checked GEMINI_API_KEY)");
     process.exit(1);
 }
 

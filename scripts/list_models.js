@@ -2,7 +2,7 @@ const { GoogleGenerativeAI } = require('@google/generative-ai');
 require('dotenv').config({ path: 'client/.env' });
 
 async function listModels() {
-    const key = process.env.VITE_GEMINI_API_KEY;
+    const key = process.env.GEMINI_API_KEY;
     if (!key) {
         console.error("No API Key found in client/.env");
         return;
