@@ -1,5 +1,11 @@
 ﻿# Testing
 
+## Vercel migration (2026-11-12)
+- `npm audit` — 0 vulnerabilities
+- `npm run test:api` — 6 passed, including request-size limits, video URL validation, and the no-key 503 response; no Gemini provider request was made
+- `npm run typecheck` — passed
+- `npm run build:client` — passed; Vite reported the existing `__dirname`, chunk-size, and mixed dynamic-import warnings
+
 ## Automated (2026-03-16)
 - npm.cmd run typecheck (pass)
 - npm.cmd run build:client (pass; warnings about dynamic import chunking and chunk size over 500 kB)

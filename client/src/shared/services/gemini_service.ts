@@ -7,6 +7,28 @@ const DEBUG_AI_LOGS = ((import.meta as any).env?.VITE_DEBUG_AI_LOGS === 'true');
 const F_Debug_Log = (...args: any[]) => { if (DEBUG_AI_LOGS) console.log(...args); };
 const F_Debug_Warn = (...args: any[]) => { if (DEBUG_AI_LOGS) console.warn(...args); };
 
+const F_Download_Private_Media = async (media: { media_url: string; delete_url?: string }) => {
+    try {
+        const response = await fetch(media.media_url);
+        if (!response.ok) throw new Error(`Media download failed (${response.status}).`);
+        return await response.blob();
+    } finally {
+        if (media.delete_url) {
+            await fetch(media.delete_url, { method: 'DELETE' }).catch(() => undefined);
+        }
+    }
+};
+
+const F_Blob_To_Data_Url = async (blob: Blob) => {
+    const bytes = new Uint8Array(await blob.arrayBuffer());
+    let binary = '';
+    const chunk_size = 0x8000;
+    for (let index = 0; index < bytes.length; index += chunk_size) {
+        binary += String.fromCharCode(...bytes.subarray(index, index + chunk_size));
+    }
+    return `data:${blob.type || 'application/octet-stream'};base64,${btoa(binary)}`;
+};
+
 // Singleton Instance Holder
 let instance: GeminiService | null = null;
 
@@ -34,10 +56,14 @@ export class GeminiService {
     }
 
     private async F_Call_Gemini_Proxy(p_operation: string, p_payload: Record<string, unknown>) {
+        const request_body = JSON.stringify({ operation: p_operation, ...p_payload });
+        if (new TextEncoder().encode(request_body).byteLength > 4_000_000) {
+            throw new Error('This request exceeds the Vercel API size limit. Use a smaller image.');
+        }
         const response = await fetch('/api/gemini', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ operation: p_operation, ...p_payload }),
+            body: request_body,
         });
         const result = await response.json().catch(() => ({}));
         if (!response.ok) {
@@ -52,9 +78,22 @@ export class GeminiService {
             contents: p_contents,
             generationConfig: p_generation_config,
         });
+        const candidates = result.candidates || [];
+        for (const candidate of candidates) {
+            for (const part of candidate.content?.parts || []) {
+                const inline_data = part.inlineData;
+                if (!inline_data?.media_url) continue;
+                const blob = await F_Download_Private_Media(inline_data);
+                const data_url = await F_Blob_To_Data_Url(blob);
+                inline_data.data = data_url.split(',', 2)[1];
+                delete inline_data.media_url;
+                delete inline_data.delete_url;
+                delete inline_data.media_pathname;
+            }
+        }
         return {
             response: {
-                candidates: result.candidates || [],
+                candidates,
                 text: () => result.text || '',
             },
         };
@@ -414,8 +453,9 @@ export class GeminiService {
             if (!response.ok) {
                 throw new Error(`Video download failed (${response.status}).`);
             }
-
-            const blob = await response.blob();
+            const media = await response.json();
+            if (!media.media_url) throw new Error('Video storage did not return a download link.');
+            const blob = await F_Download_Private_Media(media);
             F_Track_Usage('veo-3.1-generate-preview', 0.05).catch(() => undefined);
             return {
                 playback_url: URL.createObjectURL(blob),
@@ -449,7 +489,8 @@ export class GeminiService {
     private async generateImagen(prompt: string): Promise<string> {
         // Updated to Imagen 4.0 Fast based on available models list
         const result = await this.F_Call_Gemini_Proxy('generateImagen', { prompt });
-        return result.data_url;
+        if (!result.media_url) throw new Error('Image storage did not return a download link.');
+        return F_Blob_To_Data_Url(await F_Download_Private_Media(result));
     }
 
     // Phase 4/5: Pro Image Generation (Hybrid: Flash Logic -> Imagen 4 Pixels)

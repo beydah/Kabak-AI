@@ -22,7 +22,9 @@ Do not disclose vulnerabilities publicly before a fix is available.
 
 ## Security Baselines
 - Keep dependencies updated
-- Store `GEMINI_API_KEY` as a server-side Netlify environment variable; never use a `VITE_` prefix for it
-- Route all Gemini text, image, and video operations through `netlify/functions/gemini.js`
+- Store `GEMINI_API_KEY` as a server-side Vercel environment variable; never use a `VITE_` prefix for it
+- Route all Gemini text, image, and video operations through `api/gemini.js`
+- Store generated media in a private Vercel Blob store and use short-lived signed read/delete links
+- Enforce the Vercel function payload limit and the 20 MB video limit
 - Validate file uploads and user input
 - Restrict API keys and rotate when needed
